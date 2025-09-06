@@ -5,14 +5,16 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Entity
 public class FinancialAccount {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String accountName;
     private String accountNumber;
-    private String AccountType;
+    private String accountType;
     private BigDecimal balance;
 
 
@@ -23,14 +25,15 @@ public class FinancialAccount {
     private LocalDateTime createdAt;
     private LocalDateTime modifiedOn;
 
-    private FinancialAccount(){
+    public FinancialAccount(){
 
     }
 
-    public FinancialAccount(Long id, String accountNumber, String accountType, BigDecimal balance, Relationship relationship) {
+    public FinancialAccount(Long id, String accountName, String accountNumber, String accountType, BigDecimal balance, Relationship relationship) {
         this.id = id;
+        this.accountName = accountName;
         this.accountNumber = accountNumber;
-        AccountType = accountType;
+        this.accountType = accountType;
         this.balance = balance;
         this.relationship = relationship;
     }
@@ -49,6 +52,14 @@ public class FinancialAccount {
         return id;
     }
 
+    public String getAccountName() {
+        return accountName;
+    }
+
+    public void setAccountName(String accountName) {
+        this.accountName = accountName;
+    }
+
     public String getAccountNumber() {
         return accountNumber;
     }
@@ -58,11 +69,11 @@ public class FinancialAccount {
     }
 
     public String getAccountType() {
-        return AccountType;
+        return accountType;
     }
 
     public void setAccountType(String accountType) {
-        AccountType = accountType;
+        accountType = accountType;
     }
 
     public BigDecimal getBalance() {

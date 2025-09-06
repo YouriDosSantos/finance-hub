@@ -4,13 +4,14 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+@Entity
 public class Contact {
 
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String firstname;
+    private String firstName;
     private String lastName;
     private String email;
     private String phone;
@@ -27,9 +28,9 @@ public class Contact {
 
     }
 
-    public Contact(Long id, String firstname, String lastName, String email, String phone, String jobTitle, Relationship relationship) {
+    public Contact(Long id, String firstName, String lastName, String email, String phone, String jobTitle, Relationship relationship) {
         this.id = id;
-        this.firstname = firstname;
+        this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.phone = phone;
@@ -53,12 +54,12 @@ public class Contact {
         return id;
     }
 
-    public String getFirstname() {
-        return firstname;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setFirstname(String firstname) {
-        this.firstname = firstname;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
     public String getLastName() {

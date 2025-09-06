@@ -6,15 +6,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
 public class Relationship {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     private Long id;
-
     private String name;
     private String website;
-    private String Email;
-    private String phone;
+    private String email;
 
     @OneToMany(mappedBy = "relationship", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Contact> contacts = new ArrayList<>();
@@ -29,12 +28,11 @@ public class Relationship {
 
     }
 
-    public Relationship(Long id, String name, String website, String email, String phone) {
+    public Relationship(Long id, String name, String website, String email) {
         this.id = id;
         this.name = name;
         this.website = website;
-        Email = email;
-        this.phone = phone;
+        this.email = email;
     }
 
     @PrePersist
@@ -69,19 +67,11 @@ public class Relationship {
     }
 
     public String getEmail() {
-        return Email;
+        return email;
     }
 
     public void setEmail(String email) {
-        Email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
+        email = email;
     }
 
     public List<Contact> getContacts() {
