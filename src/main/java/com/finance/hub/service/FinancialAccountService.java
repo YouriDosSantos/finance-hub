@@ -67,7 +67,7 @@ public class FinancialAccountService {
         account.setBalance(financialAccountDto.getBalance());
 
         if(!account.getRelationship().getId().equals(financialAccountDto.getRelationshipId())) {
-            Relationship relationship = relationshipRepository.findById(financialAccountDto.getId())
+            Relationship relationship = relationshipRepository.findById(financialAccountDto.getRelationshipId())
                     .orElseThrow(() -> new IllegalArgumentException("Relationship not found"));
             account.setRelationship(relationship);
         }

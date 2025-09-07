@@ -6,6 +6,7 @@ import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.ContactRepository;
 import com.finance.hub.repository.RelationshipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,21 +28,21 @@ public class ContactService {
 //    Create a New Contact -> One DB write (save). Transaction ensures rollback if relationship not found or save fails.
     @Transactional
     public ContactDto createContact(ContactDto contactDto){
-        Relationship relationship = relationshipRepository.findById(contactDto.getRelationshipId())
-                .orElseThrow(() -> new IllegalArgumentException("Relationship not found"));
+            Relationship relationship = relationshipRepository.findById(contactDto.getRelationshipId())
+                    .orElseThrow(() -> new IllegalArgumentException("Relationship not found"));
 
-        Contact contact = new Contact(
-                contactDto.getId(),
-                contactDto.getFirstName(),
-                contactDto.getLastName(),
-                contactDto.getEmail(),
-                contactDto.getPhone(),
-                contactDto.getJobTitle(),
-                relationship
-        );
+            Contact contact = new Contact(
+                    contactDto.getId(),
+                    contactDto.getFirstName(),
+                    contactDto.getLastName(),
+                    contactDto.getEmail(),
+                    contactDto.getPhone(),
+                    contactDto.getJobTitle(),
+                    relationship
+            );
 
-        Contact saved = contactRepository.save(contact);
-        return mapToDto(saved);
+            Contact saved = contactRepository.save(contact);
+            return mapToDto(saved);
     }
 
 //    Find Contact by ID -> Read-only transaction for performance optimization

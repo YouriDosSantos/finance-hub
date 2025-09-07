@@ -71,7 +71,7 @@ public class Relationship {
     }
 
     public void setEmail(String email) {
-        email = email;
+        this.email = email;
     }
 
     public List<Contact> getContacts() {
