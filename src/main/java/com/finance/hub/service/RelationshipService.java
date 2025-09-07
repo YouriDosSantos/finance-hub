@@ -6,12 +6,14 @@ import com.finance.hub.model.FinancialAccount;
 import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.RelationshipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Service
 public class RelationshipService {
 
     private final RelationshipRepository relationshipRepository;

@@ -73,7 +73,7 @@ public class FinancialAccount {
     }
 
     public void setAccountType(String accountType) {
-        accountType = accountType;
+        this.accountType = accountType;
     }
 
     public BigDecimal getBalance() {
