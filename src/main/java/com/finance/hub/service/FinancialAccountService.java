@@ -1,6 +1,8 @@
 package com.finance.hub.service;
 
 import com.finance.hub.dataTransfer.FinancialAccountDto;
+import com.finance.hub.exception.BadRequestException;
+import com.finance.hub.exception.EntityNotFoundException;
 import com.finance.hub.model.FinancialAccount;
 import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.FinancialAccountRepository;
@@ -27,8 +29,13 @@ public class FinancialAccountService {
     //    Create a Financial Account
     @Transactional
     public FinancialAccountDto createFinancialAccount(FinancialAccountDto financialAccountDto) {
+
+        if(financialAccountDto.getRelationshipId() == null){
+            throw new BadRequestException(("Relationship ID is required for creating a financial account."));
+        }
+
         Relationship relationship = relationshipRepository.findById(financialAccountDto.getRelationshipId())
-                .orElseThrow(() -> new IllegalArgumentException("Relationship not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Relationship not found"));
 
         FinancialAccount financialAccount = new FinancialAccount(
                 financialAccountDto.getId(),
@@ -45,8 +52,11 @@ public class FinancialAccountService {
 
     //    Get Account By ID
     @Transactional(readOnly = true)
-    public Optional<FinancialAccountDto> getAccountById(Long id) {
-        return financialAccountRepository.findById(id).map(this::mapToDto);
+    public FinancialAccountDto getAccountById(Long id) {
+        FinancialAccount financialAccount = financialAccountRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Financial Account not found with id: " + id));
+
+        return mapToDto(financialAccount);
     }
 
 //    Get All FinancialAccounts
@@ -58,21 +68,21 @@ public class FinancialAccountService {
 //   Update Financial Account
     @Transactional
     public FinancialAccountDto updateFinancialAccount(Long id, FinancialAccountDto financialAccountDto){
-        FinancialAccount account = financialAccountRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Financial Account not found with id: " + id));
+        FinancialAccount financialAccount = financialAccountRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Financial Account not found with id: " + id));
 
-        account.setAccountName(financialAccountDto.getAccountName());
-        account.setAccountNumber(financialAccountDto.getAccountNumber());
-        account.setAccountType(financialAccountDto.getAccountType());
-        account.setBalance(financialAccountDto.getBalance());
+        financialAccount.setAccountName(financialAccountDto.getAccountName());
+        financialAccount.setAccountNumber(financialAccountDto.getAccountNumber());
+        financialAccount.setAccountType(financialAccountDto.getAccountType());
+        financialAccount.setBalance(financialAccountDto.getBalance());
 
-        if(!account.getRelationship().getId().equals(financialAccountDto.getRelationshipId())) {
+        if(!financialAccount.getRelationship().getId().equals(financialAccountDto.getRelationshipId())) {
             Relationship relationship = relationshipRepository.findById(financialAccountDto.getRelationshipId())
-                    .orElseThrow(() -> new IllegalArgumentException("Relationship not found"));
-            account.setRelationship(relationship);
+                    .orElseThrow(() -> new EntityNotFoundException("Relationship not found with id: " + financialAccountDto.getRelationshipId()));
+            financialAccount.setRelationship(relationship);
         }
 
-        FinancialAccount updated = financialAccountRepository.save(account);
+        FinancialAccount updated = financialAccountRepository.save(financialAccount);
         return mapToDto(updated);
     }
 
@@ -80,6 +90,10 @@ public class FinancialAccountService {
 //    Delete
     @Transactional
     public void deleteFinancialAccount(Long id){
+        if(!financialAccountRepository.existsById(id)){
+            throw new EntityNotFoundException("Financial Account not found with id: " + id);
+        }
+
         financialAccountRepository.deleteById(id);
     }
 

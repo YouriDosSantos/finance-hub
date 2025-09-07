@@ -28,9 +28,8 @@ public class RelationshipController {
 //    Get Relationship by ID
     @GetMapping("/{id}")
     public ResponseEntity<RelationshipDto> getRelationshipById(@PathVariable Long id){
-        return relationshipService.getRelationshipById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        RelationshipDto relationshipDto = relationshipService.getRelationshipById(id);
+        return ResponseEntity.ok(relationshipDto);
     }
 
 //    Get all Relationships

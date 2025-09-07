@@ -2,6 +2,7 @@ package com.finance.hub.service;
 
 import com.finance.hub.dataTransfer.FinancialAccountDto;
 import com.finance.hub.dataTransfer.RelationshipDto;
+import com.finance.hub.exception.EntityNotFoundException;
 import com.finance.hub.model.FinancialAccount;
 import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.RelationshipRepository;
@@ -39,8 +40,10 @@ public class RelationshipService {
 
 //    get RelationshipById
     @Transactional(readOnly = true)
-    public Optional<RelationshipDto> getRelationshipById(Long id){
-        return relationshipRepository.findById(id).map(this::mapToDto);
+    public RelationshipDto getRelationshipById(Long id){
+        Relationship relationship = relationshipRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Relationship not found with id: " + id));
+        return mapToDto(relationship);
     }
 
 //    Get All Relationships
@@ -53,7 +56,7 @@ public class RelationshipService {
     @Transactional
     public RelationshipDto updateRelationship(Long id, RelationshipDto relationshipDto){
         Relationship relationship = relationshipRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Relationship not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Relationship not found with id: " + id));
 
         relationship.setName(relationshipDto.getName());
         relationship.setWebsite(relationshipDto.getWebsite());
@@ -66,6 +69,10 @@ public class RelationshipService {
 //    Delete by Id
     @Transactional
     public void deleteRelationship(Long id){
+        if (!relationshipRepository.existsById(id)){
+           throw new EntityNotFoundException("Relationship not found with id: " + id);
+        }
+
         relationshipRepository.deleteById(id);
     }
 

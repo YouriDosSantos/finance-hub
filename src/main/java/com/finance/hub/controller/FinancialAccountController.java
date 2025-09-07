@@ -1,6 +1,7 @@
 package com.finance.hub.controller;
 
 import com.finance.hub.dataTransfer.FinancialAccountDto;
+import com.finance.hub.model.FinancialAccount;
 import com.finance.hub.service.FinancialAccountService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,9 +29,8 @@ public class FinancialAccountController {
 //    Get Account by ID
     @GetMapping("/{id}")
     public ResponseEntity<FinancialAccountDto> getFinancialAccountById(@PathVariable Long id){
-        return financialAccountService.getAccountById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build()); //404 not found
+        FinancialAccountDto financialAccountDto = financialAccountService.getAccountById(id);
+        return ResponseEntity.ok(financialAccountDto);
     }
 
 //    Get All Accounts

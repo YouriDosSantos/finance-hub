@@ -2,7 +2,6 @@ package com.finance.hub.controller;
 
 import com.finance.hub.dataTransfer.ContactDto;
 import com.finance.hub.service.ContactService;
-import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,9 +28,9 @@ public class ContactController {
 //    Get by ID
     @GetMapping("/{id}")
     public ResponseEntity<ContactDto> getContactById(@PathVariable Long id){
-        return contactService.getContactById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build()); //404 not found
+        ContactDto contact = contactService.getContactById(id);
+
+        return ResponseEntity.ok(contact);
     }
 
 //    Get All

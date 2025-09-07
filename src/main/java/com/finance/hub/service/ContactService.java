@@ -1,6 +1,8 @@
 package com.finance.hub.service;
 
 import com.finance.hub.dataTransfer.ContactDto;
+import com.finance.hub.exception.BadRequestException;
+import com.finance.hub.exception.EntityNotFoundException;
 import com.finance.hub.model.Contact;
 import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.ContactRepository;
@@ -28,10 +30,15 @@ public class ContactService {
 //    Create a New Contact -> One DB write (save). Transaction ensures rollback if relationship not found or save fails.
     @Transactional
     public ContactDto createContact(ContactDto contactDto){
-            Relationship relationship = relationshipRepository.findById(contactDto.getRelationshipId())
-                    .orElseThrow(() -> new IllegalArgumentException("Relationship not found"));
 
-            Contact contact = new Contact(
+        if(contactDto.getRelationshipId() == null){
+          throw new BadRequestException("Relationship ID is required for creating a contact.");
+        }
+
+        Relationship relationship = relationshipRepository.findById(contactDto.getRelationshipId())
+                    .orElseThrow(() -> new EntityNotFoundException("Relationship not found with ID: " + contactDto.getRelationshipId()));
+
+        Contact contact = new Contact(
                     contactDto.getId(),
                     contactDto.getFirstName(),
                     contactDto.getLastName(),
@@ -41,14 +48,16 @@ public class ContactService {
                     relationship
             );
 
-            Contact saved = contactRepository.save(contact);
+        Contact saved = contactRepository.save(contact);
             return mapToDto(saved);
     }
 
 //    Find Contact by ID -> Read-only transaction for performance optimization
     @Transactional(readOnly = true)
-    public Optional<ContactDto> getContactById(Long id){
-        return contactRepository.findById(id).map(this::mapToDto);
+    public ContactDto getContactById(Long id){
+        Contact contact = contactRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Contact not found with id: " + id));
+        return mapToDto(contact);
     }
 
 //    Find All Contacts
@@ -61,7 +70,7 @@ public class ContactService {
     @Transactional
     public ContactDto updateContact(Long id, ContactDto contactDto){
         Contact contact = contactRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Contact not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Contact not found with id: " + id));
 
         //Update fields
         contact.setFirstName(contactDto.getFirstName());
@@ -70,10 +79,10 @@ public class ContactService {
         contact.setPhone(contactDto.getPhone());
         contact.setJobTitle(contactDto.getJobTitle());
 
-        //update relationhip if changed
-        if(!contact.getRelationship().getId().equals(contactDto.getRelationshipId())){
+        //update relationship if changed
+        if(contactDto.getRelationshipId() != null && !contact.getRelationship().getId().equals(contactDto.getRelationshipId())){
             Relationship relationship = relationshipRepository.findById(contactDto.getRelationshipId())
-                    .orElseThrow(() -> new IllegalArgumentException("Relationship not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Relationship not found with id: " + contactDto.getRelationshipId()));
             contact.setRelationship(relationship);
         }
 
@@ -84,6 +93,10 @@ public class ContactService {
 //    Delete a contact -> One DB delete. Wraps delete in a transaction.
     @Transactional
     public void deleteContact(Long id){
+        if(!contactRepository.existsById(id)){
+            throw new EntityNotFoundException("Contact not found with id: " + id);
+        }
+
         contactRepository.deleteById(id);
     }
 
