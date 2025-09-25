@@ -79,11 +79,11 @@ public class RelationshipService {
 
 
     private RelationshipDto mapToDto(Relationship relationship){
-        return new RelationshipDto.Builder()
-                .id(relationship.getId())
-                .name(relationship.getName())
-                .website(relationship.getWebsite())
-                .email(relationship.getEmail())
-                .build();
+        return new RelationshipDto(
+                relationship.getId(),
+                relationship.getName(),
+                relationship.getWebsite(),
+                relationship.getEmail()
+        );
     }
 }

@@ -22,9 +22,6 @@ public class FinancialAccount {
     @JoinColumn(name = "relationship_id")
     private Relationship relationship;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime modifiedOn;
-
     public FinancialAccount(){
 
     }
@@ -36,16 +33,6 @@ public class FinancialAccount {
         this.accountType = accountType;
         this.balance = balance;
         this.relationship = relationship;
-    }
-
-    @PrePersist
-    protected  void onCreate(){
-        createdAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onModified(){
-        modifiedOn = LocalDateTime.now();
     }
 
     public Long getId() {

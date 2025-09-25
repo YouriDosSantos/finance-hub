@@ -21,9 +21,6 @@ public class Contact {
     @JoinColumn(name = "relationship_id")
     private Relationship relationship;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime modifiedOn;
-
     public Contact(){
 
     }
@@ -37,18 +34,6 @@ public class Contact {
         this.jobTitle = jobTitle;
         this.relationship = relationship;
     }
-
-    @PrePersist
-    protected  void onCreate(){
-        createdAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onModified(){
-        modifiedOn = LocalDateTime.now();
-    }
-
-
 
     public Long getId() {
         return id;

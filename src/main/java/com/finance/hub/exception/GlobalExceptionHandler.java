@@ -17,7 +17,7 @@ public class GlobalExceptionHandler {
 //    Handles "Bad Request" exceptions(400)
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<String> handleBadRequest(BadRequestException ex){
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
 //    Fallback for any other unhandled exception (500)

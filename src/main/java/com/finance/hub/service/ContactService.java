@@ -27,32 +27,32 @@ public class ContactService {
         this.relationshipRepository = relationshipRepository;
     }
 
-//    Create a New Contact -> One DB write (save). Transaction ensures rollback if relationship not found or save fails.
+    //    Create a New Contact -> One DB write (save). Transaction ensures rollback if relationship not found or save fails.
     @Transactional
     public ContactDto createContact(ContactDto contactDto){
 
         if(contactDto.getRelationshipId() == null){
-          throw new BadRequestException("Relationship ID is required for creating a contact.");
+            throw new BadRequestException("Relationship ID is required for creating a contact.");
         }
 
         Relationship relationship = relationshipRepository.findById(contactDto.getRelationshipId())
-                    .orElseThrow(() -> new EntityNotFoundException("Relationship not found with ID: " + contactDto.getRelationshipId()));
+                .orElseThrow(() -> new EntityNotFoundException("Relationship not found with ID: " + contactDto.getRelationshipId()));
 
         Contact contact = new Contact(
-                    contactDto.getId(),
-                    contactDto.getFirstName(),
-                    contactDto.getLastName(),
-                    contactDto.getEmail(),
-                    contactDto.getPhone(),
-                    contactDto.getJobTitle(),
-                    relationship
-            );
+                contactDto.getId(),
+                contactDto.getFirstName(),
+                contactDto.getLastName(),
+                contactDto.getEmail(),
+                contactDto.getPhone(),
+                contactDto.getJobTitle(),
+                relationship
+        );
 
         Contact saved = contactRepository.save(contact);
-            return mapToDto(saved);
+        return mapToDto(saved);
     }
 
-//    Find Contact by ID -> Read-only transaction for performance optimization
+    //    Find Contact by ID -> Read-only transaction for performance optimization
     @Transactional(readOnly = true)
     public ContactDto getContactById(Long id){
         Contact contact = contactRepository.findById(id)
@@ -60,13 +60,13 @@ public class ContactService {
         return mapToDto(contact);
     }
 
-//    Find All Contacts
+    //    Find All Contacts
     @Transactional(readOnly = true)
     public List<ContactDto> getAllContacts(){
         return contactRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
-//    Update a Contact -> Update modifies + saves. Needs a transaction for atomicity.
+    //    Update a Contact -> Update modifies + saves. Needs a transaction for atomicity.
     @Transactional
     public ContactDto updateContact(Long id, ContactDto contactDto){
         Contact contact = contactRepository.findById(id)
@@ -90,7 +90,7 @@ public class ContactService {
         return mapToDto(updated);
     }
 
-//    Delete a contact -> One DB delete. Wraps delete in a transaction.
+    //    Delete a contact -> One DB delete. Wraps delete in a transaction.
     @Transactional
     public void deleteContact(Long id){
         if(!contactRepository.existsById(id)){
@@ -101,16 +101,16 @@ public class ContactService {
     }
 
 
-//    Mapping Helper
+    //    Mapping Helper
     private ContactDto mapToDto(Contact contact){
-        return new ContactDto.Builder()
-                .id(contact.getId())
-                .firstName(contact.getFirstName())
-                .lastName(contact.getLastName())
-                .email(contact.getEmail())
-                .phone(contact.getPhone())
-                .jobTitle(contact.getJobTitle())
-                .relationshipId(contact.getRelationship().getId())
-                .build();
+        return new ContactDto(
+                contact.getId(),
+                contact.getFirstName(),
+                contact.getLastName(),
+                contact.getEmail(),
+                contact.getPhone(),
+                contact.getJobTitle(),
+                contact.getRelationship() != null ? contact.getRelationship().getId() : null
+        );
     }
 }
