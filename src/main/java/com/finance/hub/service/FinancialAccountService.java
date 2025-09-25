@@ -76,7 +76,7 @@ public class FinancialAccountService {
         financialAccount.setAccountType(financialAccountDto.getAccountType());
         financialAccount.setBalance(financialAccountDto.getBalance());
 
-        if(!financialAccount.getRelationship().getId().equals(financialAccountDto.getRelationshipId())) {
+        if(financialAccountDto.getRelationshipId() != null  && !financialAccount.getRelationship().getId().equals(financialAccountDto.getRelationshipId())) {
             Relationship relationship = relationshipRepository.findById(financialAccountDto.getRelationshipId())
                     .orElseThrow(() -> new EntityNotFoundException("Relationship not found with id: " + financialAccountDto.getRelationshipId()));
             financialAccount.setRelationship(relationship);
@@ -99,14 +99,14 @@ public class FinancialAccountService {
 
 //Mapping Helper
     private FinancialAccountDto mapToDto(FinancialAccount financialAccount) {
-        return new FinancialAccountDto.Builder()
-                .id(financialAccount.getId())
-                .accountName(financialAccount.getAccountName())
-                .accountNumber(financialAccount.getAccountNumber())
-                .accountType(financialAccount.getAccountType())
-                .balance(financialAccount.getBalance())
-                .relationshipId(financialAccount.getRelationship().getId())
-                .build();
+        return new FinancialAccountDto(
+                financialAccount.getId(),
+                financialAccount.getAccountName(),
+                financialAccount.getAccountNumber(),
+                financialAccount.getAccountType(),
+                financialAccount.getBalance(),
+                financialAccount.getRelationship() != null ? financialAccount.getRelationship().getId() : null
+        );
     }
 }
 

@@ -15,14 +15,11 @@ public class Relationship {
     private String website;
     private String email;
 
-    @OneToMany(mappedBy = "relationship", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "relationship", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Contact> contacts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "relationship", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "relationship", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<FinancialAccount> accounts = new ArrayList<>();
-
-    private LocalDateTime createdAt;
-    private LocalDateTime modifiedOn;
 
     public Relationship(){
 
@@ -33,16 +30,6 @@ public class Relationship {
         this.name = name;
         this.website = website;
         this.email = email;
-    }
-
-    @PrePersist
-    protected  void onCreate(){
-        createdAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onModified(){
-        modifiedOn = LocalDateTime.now();
     }
 
 
