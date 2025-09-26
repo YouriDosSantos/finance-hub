@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/financialAccounts")
+@RequestMapping("/api/financial-accounts")
 public class FinancialAccountController {
 
     public final FinancialAccountService financialAccountService;
