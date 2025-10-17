@@ -67,23 +67,47 @@ public class AuthorizationServerConfig {
 	@Autowired
 	private UserDetailsService userDetailsService;
 
-	@Bean
+//	@Bean
+//	@Order(2)
+//	public SecurityFilterChain asSecurityFilterChain(HttpSecurity http) throws Exception {
+//
+//		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+//
+//		// @formatter:off
+//		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+//			.tokenEndpoint(tokenEndpoint -> tokenEndpoint
+//				.accessTokenRequestConverter(new CustomPasswordAuthenticationConverter())
+//				.authenticationProvider(new CustomPasswordAuthenticationProvider(authorizationService(), tokenGenerator(), userDetailsService, passwordEncoder())));
+//
+//		http.oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer.jwt(Customizer.withDefaults()));
+//		// @formatter:on
+//
+//		return http.build();
+//	}
+
 	@Order(2)
+	@Bean
 	public SecurityFilterChain asSecurityFilterChain(HttpSecurity http) throws Exception {
+		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 
-		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-
-		// @formatter:off
-		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-			.tokenEndpoint(tokenEndpoint -> tokenEndpoint
-				.accessTokenRequestConverter(new CustomPasswordAuthenticationConverter())
-				.authenticationProvider(new CustomPasswordAuthenticationProvider(authorizationService(), tokenGenerator(), userDetailsService, passwordEncoder())));
-
-		http.oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer.jwt(Customizer.withDefaults()));
-		// @formatter:on
+		http
+				// Match only the authorization server endpoints
+				.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+				// Apply the new configurer DSL
+				.with(authorizationServerConfigurer, (configurer) -> configurer
+						.tokenEndpoint(tokenEndpoint -> tokenEndpoint
+								.accessTokenRequestConverter(new CustomPasswordAuthenticationConverter())
+								.authenticationProvider(new CustomPasswordAuthenticationProvider(
+										authorizationService(), tokenGenerator(), userDetailsService, passwordEncoder()
+								))
+						)
+				)
+				// Enable JWT resource server support
+				.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 
 		return http.build();
 	}
+
 
 	@Bean
 	public OAuth2AuthorizationService authorizationService() {
