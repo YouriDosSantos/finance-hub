@@ -5,6 +5,7 @@ import com.finance.hub.model.FinancialAccount;
 import com.finance.hub.service.FinancialAccountService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class FinancialAccountController {
     }
 
 //    Create Account
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping
     public ResponseEntity<FinancialAccountDto> createFinancialAccount(@RequestBody FinancialAccountDto financialAccountDto){
         FinancialAccountDto created = financialAccountService.createFinancialAccount(financialAccountDto);
@@ -27,6 +29,7 @@ public class FinancialAccountController {
     }
 
 //    Get Account by ID
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_OPERATOR')")
     @GetMapping("/{id}")
     public ResponseEntity<FinancialAccountDto> getFinancialAccountById(@PathVariable Long id){
         FinancialAccountDto financialAccountDto = financialAccountService.getAccountById(id);
@@ -40,6 +43,7 @@ public class FinancialAccountController {
     }
 
 //    Update account
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<FinancialAccountDto> updateFinancialAccount(@PathVariable Long id, @RequestBody FinancialAccountDto financialAccountDto){
         FinancialAccountDto updated = financialAccountService.updateFinancialAccount(id, financialAccountDto);
@@ -47,6 +51,7 @@ public class FinancialAccountController {
     }
 
 //    Delete Account
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteFinancialAccount(@PathVariable Long id){
         financialAccountService.deleteFinancialAccount(id);

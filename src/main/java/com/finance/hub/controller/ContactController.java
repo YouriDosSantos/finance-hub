@@ -4,6 +4,7 @@ import com.finance.hub.dataTransfer.ContactDto;
 import com.finance.hub.service.ContactService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class ContactController {
     }
 
 //    Create
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping
     public ResponseEntity<ContactDto> createContact(@RequestBody ContactDto contactDto){
         ContactDto created = contactService.createContact(contactDto);
@@ -27,6 +29,7 @@ public class ContactController {
     }
 
 //    Get by ID
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_OPERATOR')")
     @GetMapping("/{id}")
     public ResponseEntity<ContactDto> getContactById(@PathVariable Long id){
         ContactDto contact = contactService.getContactById(id);
@@ -41,6 +44,7 @@ public class ContactController {
     }
 
 //    Update
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ContactDto> updateContact(
             @PathVariable Long id,
@@ -51,6 +55,7 @@ public class ContactController {
     }
 
 //    Delete
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteContact(@PathVariable Long id){
         contactService.deleteContact(id);

@@ -171,18 +171,44 @@ public class AuthorizationServerConfig {
 		return new DelegatingOAuth2TokenGenerator(jwtGenerator, accessTokenGenerator);
 	}
 
+//	@Bean
+//	public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
+//		return context -> {
+//			OAuth2ClientAuthenticationToken principal = context.getPrincipal();
+//			CustomUserAuthorities user = (CustomUserAuthorities) principal.getDetails();
+//			List<String> authorities = user.getAuthorities().stream()
+//					.map(x -> x.getAuthority())
+//					.toList();
+//			if (context.getTokenType().getValue().equals("access_token")) {
+//				// @formatter:off
+//				context.getClaims()
+//						.claim("authorities", authorities)
+//						.claim("username", user.getUsername());
+//				// @formatter:on
+//			}
+//		};
+//	}
+
 	@Bean
 	public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
 		return context -> {
-			OAuth2ClientAuthenticationToken principal = context.getPrincipal();
-			CustomUserAuthorities user = (CustomUserAuthorities) principal.getDetails();
-			List<String> authorities = user.getAuthorities().stream().map(x -> x.getAuthority()).toList();
-			if (context.getTokenType().getValue().equals("access_token")) {
-				// @formatter:off
+			if (!"access_token".equals(context.getTokenType().getValue())) return;
+
+			Object details = context.getPrincipal().getDetails();
+			if (details instanceof CustomUserAuthorities user) {
+				List<String> authorities = user.getAuthorities().stream()
+						.map(x -> x.getAuthority())
+						.map(auth -> auth.startsWith("ROLE_") ? auth : "ROLE_" + auth)
+						.toList();
+
 				context.getClaims()
-					.claim("authorities", authorities)
-					.claim("username", user.getUsername());
-				// @formatter:on
+						.claim("authorities", authorities)
+						.claim("username", user.getUsername());
+			} else {
+				// fallback: no authorities in details
+				context.getClaims()
+						.claim("authorities", List.of())
+						.claim("username", context.getPrincipal().getName());
 			}
 		};
 	}
@@ -218,3 +244,5 @@ public class AuthorizationServerConfig {
 		return keyPair;
 	}
 }
+
+
