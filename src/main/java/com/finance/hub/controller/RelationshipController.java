@@ -4,6 +4,7 @@ import com.finance.hub.dataTransfer.RelationshipDto;
 import com.finance.hub.service.RelationshipService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class RelationshipController {
     }
 
 //    Create Relationship
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping
     public ResponseEntity<RelationshipDto> createRelationship(@RequestBody RelationshipDto relationshipDto){
         RelationshipDto created = relationshipService.createRelationship(relationshipDto);
@@ -26,6 +28,7 @@ public class RelationshipController {
     }
 
 //    Get Relationship by ID
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_OPERATOR')")
     @GetMapping("/{id}")
     public ResponseEntity<RelationshipDto> getRelationshipById(@PathVariable Long id){
         RelationshipDto relationshipDto = relationshipService.getRelationshipById(id);
@@ -39,6 +42,7 @@ public class RelationshipController {
     }
 
 //   Update a Relationship
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<RelationshipDto> updateRelationship(@PathVariable Long id, @RequestBody RelationshipDto relationshipDto){
         RelationshipDto update = relationshipService.updateRelationship(id, relationshipDto);
@@ -46,6 +50,7 @@ public class RelationshipController {
     }
 
 //    Delete a Relationship
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<RelationshipDto> deleteRelationship(@PathVariable Long id){
         relationshipService.deleteRelationship(id);
