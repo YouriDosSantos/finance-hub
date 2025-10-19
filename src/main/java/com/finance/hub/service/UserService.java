@@ -1,16 +1,22 @@
 package com.finance.hub.service;
 
+import com.finance.hub.dataTransfer.UserDto;
 import com.finance.hub.model.Role;
 import com.finance.hub.model.User;
 import com.finance.hub.projection.UserDetailsProjection;
 import com.finance.hub.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -34,5 +40,23 @@ public class UserService implements UserDetailsService {
         }
 
         return user;
+    }
+
+    protected User authenticated(){
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Jwt jwtPrincipal = (Jwt) authentication.getPrincipal();
+            String username = jwtPrincipal.getClaim("username");
+
+            return repository.findByEmail(username).get();
+        } catch (Exception e) {
+            throw new UsernameNotFoundException("Email not found");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public UserDto getMe(){
+        User user = authenticated();
+        return new UserDto(user);
     }
 }
