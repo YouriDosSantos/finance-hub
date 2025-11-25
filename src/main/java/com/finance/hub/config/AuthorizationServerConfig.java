@@ -67,23 +67,6 @@ public class AuthorizationServerConfig {
 	@Autowired
 	private UserDetailsService userDetailsService;
 
-//	@Bean
-//	@Order(2)
-//	public SecurityFilterChain asSecurityFilterChain(HttpSecurity http) throws Exception {
-//
-//		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-//
-//		// @formatter:off
-//		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-//			.tokenEndpoint(tokenEndpoint -> tokenEndpoint
-//				.accessTokenRequestConverter(new CustomPasswordAuthenticationConverter())
-//				.authenticationProvider(new CustomPasswordAuthenticationProvider(authorizationService(), tokenGenerator(), userDetailsService, passwordEncoder())));
-//
-//		http.oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer.jwt(Customizer.withDefaults()));
-//		// @formatter:on
-//
-//		return http.build();
-//	}
 
 	@Order(2)
 	@Bean
@@ -170,24 +153,6 @@ public class AuthorizationServerConfig {
 		OAuth2AccessTokenGenerator accessTokenGenerator = new OAuth2AccessTokenGenerator();
 		return new DelegatingOAuth2TokenGenerator(jwtGenerator, accessTokenGenerator);
 	}
-
-//	@Bean
-//	public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
-//		return context -> {
-//			OAuth2ClientAuthenticationToken principal = context.getPrincipal();
-//			CustomUserAuthorities user = (CustomUserAuthorities) principal.getDetails();
-//			List<String> authorities = user.getAuthorities().stream()
-//					.map(x -> x.getAuthority())
-//					.toList();
-//			if (context.getTokenType().getValue().equals("access_token")) {
-//				// @formatter:off
-//				context.getClaims()
-//						.claim("authorities", authorities)
-//						.claim("username", user.getUsername());
-//				// @formatter:on
-//			}
-//		};
-//	}
 
 	@Bean
 	public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
