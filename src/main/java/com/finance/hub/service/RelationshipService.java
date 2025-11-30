@@ -1,18 +1,13 @@
 package com.finance.hub.service;
 
-import com.finance.hub.dataTransfer.FinancialAccountDto;
 import com.finance.hub.dataTransfer.RelationshipDto;
 import com.finance.hub.exception.EntityNotFoundException;
-import com.finance.hub.model.FinancialAccount;
 import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.RelationshipRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class RelationshipService {
@@ -47,10 +42,28 @@ public class RelationshipService {
     }
 
 //    Get All Relationships
+//    @Transactional(readOnly = true)
+//    public List<RelationshipDto> getAllRelationships(){
+//        return relationshipRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
+//    }
+
+//    Change for Pagination
     @Transactional(readOnly = true)
-    public List<RelationshipDto> getAllRelationships(){
-        return relationshipRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
+    public Page<RelationshipDto> getAllRelationships(String search, Pageable pageable) {
+        Page<Relationship> relationships;
+
+        if(search == null || search.isBlank()) {
+            relationships = relationshipRepository.findAll(pageable);
+        } else {
+            relationships = relationshipRepository
+                    .findByNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrWebsiteContainingIgnoreCase(
+                        search, search, search, pageable
+            );
+        }
+
+        return relationships.map(this::mapToDto);
     }
+
 
 //    Update Relationship record
     @Transactional

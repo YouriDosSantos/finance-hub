@@ -9,6 +9,8 @@ import com.finance.hub.repository.ContactRepository;
 import com.finance.hub.repository.RelationshipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,11 +62,33 @@ public class ContactService {
         return mapToDto(contact);
     }
 
-    //    Find All Contacts
+//    //    Find All Contacts
+//    @Transactional(readOnly = true)
+//    public List<ContactDto> getAllContacts(){
+//        return contactRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
+//    }
+
+//    //Change for pageable
+//    @Transactional(readOnly = true)
+//    public Page<ContactDto> getAllContacts(Pageable pageable){
+//        return contactRepository.findAll(pageable).map(this::mapToDto);
+//    }
+
     @Transactional(readOnly = true)
-    public List<ContactDto> getAllContacts(){
-        return contactRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
+    public Page<ContactDto> getAllContacts(String search, Pageable pageable) {
+        Page<Contact> contacts;
+
+        if(search == null || search.isBlank()) {
+            contacts = contactRepository.findAll(pageable);
+        } else {
+            contacts = contactRepository
+                    .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrJobTitleContainingIgnoreCase(
+                            search, search, search, search, pageable
+                    );
+        }
+        return contacts.map(this::mapToDto);
     }
+
 
     //    Update a Contact -> Update modifies + saves. Needs a transaction for atomicity.
     @Transactional

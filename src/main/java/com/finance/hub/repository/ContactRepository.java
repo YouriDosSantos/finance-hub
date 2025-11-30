@@ -1,6 +1,8 @@
 package com.finance.hub.repository;
 
 import com.finance.hub.model.Contact;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,26 +31,10 @@ public interface ContactRepository extends JpaRepository<Contact, Long> {
 //    If Email is unique per contact, return Optional
     Optional<Contact> findByEmail(String Email);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    // Change for Pageable/Search
+    Page<Contact> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrJobTitleContainingIgnoreCase(
+            String firstName, String lastName, String email, String jobTitle, Pageable pageable
+    );
 
 
 //    THE BELOW COULD BE USED IN A JPA/RAW SQL MIX WITH ANNOTATION
