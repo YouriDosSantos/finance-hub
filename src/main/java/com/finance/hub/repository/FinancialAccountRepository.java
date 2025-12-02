@@ -1,9 +1,9 @@
 package com.finance.hub.repository;
 
 import com.finance.hub.model.FinancialAccount;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -26,6 +26,10 @@ public interface FinancialAccountRepository extends JpaRepository<FinancialAccou
 //    find Accounts with a balance greater than a given amount
     List<FinancialAccount> findByBalanceGreaterThan(BigDecimal amount);
 
+//    Change for Pagination
+    Page<FinancialAccount> findByAccountNameContainingIgnoreCaseOrAccountNumberContainingIgnoreCaseOrAccountTypeContainingIgnoreCase(
+            String accountName, String accountNumber, String accountType, Pageable pageable
+    );
 
 
 

@@ -2,6 +2,10 @@ package com.finance.hub.controller;
 
 import com.finance.hub.dataTransfer.ContactDto;
 import com.finance.hub.service.ContactService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,10 +41,27 @@ public class ContactController {
         return ResponseEntity.ok(contact);
     }
 
-//    Get All
+////    Get All
+//    @GetMapping
+//    public ResponseEntity<List<ContactDto>> getAllContacts(){
+//        return ResponseEntity.ok(contactService.getAllContacts());
+//    }
+
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_OPERATOR')")
     @GetMapping
-    public ResponseEntity<List<ContactDto>> getAllContacts(){
-        return ResponseEntity.ok(contactService.getAllContacts());
+    public ResponseEntity<Page<ContactDto>> getAllContacts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction,
+            @RequestParam(required = false) String search
+    ){
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<ContactDto> result = contactService.getAllContacts(search, pageable);
+        return ResponseEntity.ok(result);
     }
 
 //    Update

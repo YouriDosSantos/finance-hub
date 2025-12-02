@@ -1,6 +1,9 @@
 package com.finance.hub.repository;
 
+import com.finance.hub.model.Contact;
 import com.finance.hub.model.Relationship;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,6 +21,12 @@ public interface RelationshipRepository extends JpaRepository<Relationship, Long
 
 
     Optional<Relationship> findByEmail(String email);
+
+//    Changes for Pagination
+    Page<Relationship> findByNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrWebsiteContainingIgnoreCase(
+            String name, String email, String website, Pageable pageable
+    );
+
 
     //    THE BELOW COULD BE USED IN A JPA/RAW SQL MIX WITH ANNOTATION
 

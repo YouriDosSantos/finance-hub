@@ -8,6 +8,8 @@ import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.FinancialAccountRepository;
 import com.finance.hub.repository.RelationshipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,11 +61,29 @@ public class FinancialAccountService {
         return mapToDto(financialAccount);
     }
 
-//    Get All FinancialAccounts
+////    Get All FinancialAccounts
+//    @Transactional(readOnly = true)
+//    public List<FinancialAccountDto> getAllFinancialAccounts(){
+//        return financialAccountRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
+//    }
+
+//  Changes for Pagination
     @Transactional(readOnly = true)
-    public List<FinancialAccountDto> getAllFinancialAccounts(){
-        return financialAccountRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
+    public Page<FinancialAccountDto> getAllFinancialAccounts(String search, Pageable pageable) {
+        Page<FinancialAccount> financialAccounts;
+
+        if(search == null || search.isBlank()){
+            financialAccounts = financialAccountRepository.findAll(pageable);
+        } else {
+            financialAccounts = financialAccountRepository
+                    .findByAccountNameContainingIgnoreCaseOrAccountNumberContainingIgnoreCaseOrAccountTypeContainingIgnoreCase(
+                            search, search, search, pageable
+                    );
+        }
+
+        return financialAccounts.map(this::mapToDto);
     }
+
 
 //   Update Financial Account
     @Transactional
