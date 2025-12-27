@@ -50,17 +50,16 @@ public class FinancialAccountController {
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_OPERATOR')")
     @GetMapping
     public ResponseEntity<Page<FinancialAccountDto>> getAllFinancialAccounts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
+            // starting row index(like SQL OFFSET)
+            @RequestParam(defaultValue = "0") int offset,
+            // max number of rows returned
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction,
-            @RequestParam(required = false) String search
+            @RequestParam(defaultValue = "asc") String direction
+
     ) {
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<FinancialAccountDto> result = financialAccountService.getAllFinancialAccounts(search, pageable);
+        Page<FinancialAccountDto> result = financialAccountService.getAllFinancialAccounts(search, limit, offset, sortBy, direction);
         return ResponseEntity.ok(result);
     }
 

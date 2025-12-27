@@ -3,6 +3,7 @@ package com.finance.hub.service;
 import com.finance.hub.dataTransfer.ContactDto;
 import com.finance.hub.exception.BadRequestException;
 import com.finance.hub.exception.EntityNotFoundException;
+import com.finance.hub.jdbcRepo.ContactJdbcRepository;
 import com.finance.hub.model.Contact;
 import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.ContactRepository;
@@ -10,6 +11,8 @@ import com.finance.hub.repository.RelationshipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +24,12 @@ import java.util.stream.Collectors;
 @Service
 public class ContactService {
 
-    private final ContactRepository contactRepository;
+//    private final ContactRepository contactRepository;
+    private final ContactJdbcRepository contactJdbcRepository;
     private final RelationshipRepository relationshipRepository;
 
-    public ContactService(ContactRepository contactRepository, RelationshipRepository relationshipRepository) {
-        this.contactRepository = contactRepository;
+    public ContactService(ContactJdbcRepository contactJdbcRepository, RelationshipRepository relationshipRepository) {
+        this.contactJdbcRepository = contactJdbcRepository;
         this.relationshipRepository = relationshipRepository;
     }
 
@@ -50,50 +54,39 @@ public class ContactService {
                 relationship
         );
 
-        Contact saved = contactRepository.save(contact);
+        Contact saved = contactJdbcRepository.save(contact);
         return mapToDto(saved);
     }
 
     //    Find Contact by ID -> Read-only transaction for performance optimization
     @Transactional(readOnly = true)
     public ContactDto getContactById(Long id){
-        Contact contact = contactRepository.findById(id)
+        Contact contact = contactJdbcRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Contact not found with id: " + id));
         return mapToDto(contact);
     }
 
-//    //    Find All Contacts
-//    @Transactional(readOnly = true)
-//    public List<ContactDto> getAllContacts(){
-//        return contactRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
-//    }
-
-//    //Change for pageable
-//    @Transactional(readOnly = true)
-//    public Page<ContactDto> getAllContacts(Pageable pageable){
-//        return contactRepository.findAll(pageable).map(this::mapToDto);
-//    }
-
     @Transactional(readOnly = true)
-    public Page<ContactDto> getAllContacts(String search, Pageable pageable) {
-        Page<Contact> contacts;
-
-        if(search == null || search.isBlank()) {
-            contacts = contactRepository.findAll(pageable);
+    public Page<ContactDto> getAllContacts(String search, int limit, int offset, String sortBy, String direction) {
+        List<Contact> contacts;
+        if (search == null || search.isBlank()) {
+            contacts = contactJdbcRepository.findAll(limit, offset, sortBy, direction);   // <-- implement in JDBC repo
         } else {
-            contacts = contactRepository
-                    .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrJobTitleContainingIgnoreCase(
-                            search, search, search, search, pageable
-                    );
+            contacts = contactJdbcRepository.searchContacts(search, limit, offset, sortBy, direction);
         }
-        return contacts.map(this::mapToDto);
+
+        List<ContactDto> dtos = contacts.stream().map(this::mapToDto).toList();
+        Long total = contactJdbcRepository.countContacts(search);
+
+        PageRequest pageRequest = PageRequest.of(offset / limit, limit);
+        return new PageImpl<>(dtos, pageRequest, total);
     }
 
 
     //    Update a Contact -> Update modifies + saves. Needs a transaction for atomicity.
     @Transactional
     public ContactDto updateContact(Long id, ContactDto contactDto){
-        Contact contact = contactRepository.findById(id)
+        Contact contact = contactJdbcRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Contact not found with id: " + id));
 
         //Update fields
@@ -110,18 +103,18 @@ public class ContactService {
             contact.setRelationship(relationship);
         }
 
-        Contact updated = contactRepository.save(contact);
+        Contact updated = contactJdbcRepository.save(contact);
         return mapToDto(updated);
     }
 
     //    Delete a contact -> One DB delete. Wraps delete in a transaction.
     @Transactional
     public void deleteContact(Long id){
-        if(!contactRepository.existsById(id)){
+        if(!contactJdbcRepository.existsById(id)){
             throw new EntityNotFoundException("Contact not found with id: " + id);
         }
 
-        contactRepository.deleteById(id);
+        contactJdbcRepository.deleteById(id);
     }
 
 

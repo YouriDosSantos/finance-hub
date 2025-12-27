@@ -39,27 +39,19 @@ public class RelationshipController {
         return ResponseEntity.ok(relationshipDto);
     }
 
-////    Get all Relationships
-//    @GetMapping
-//    public ResponseEntity<List<RelationshipDto>> getAllRelationships(){
-//        return ResponseEntity.ok(relationshipService.getAllRelationships());
-//    }
-
-//  Change for Pagination
+//Get All (With optional search, limit, offset)
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_OPERATOR')")
     @GetMapping
     public ResponseEntity<Page<RelationshipDto>> getAllRelationships(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
+            //starting row index(like SQL OFFSET)
+            @RequestParam(defaultValue = "0") int offset,
+            //max number of rows returned
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction,
-            @RequestParam(required = false) String search) {
+            @RequestParam(defaultValue = "asc") String direction) {
 
-        Sort sort = direction .equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<RelationshipDto> result = relationshipService.getAllRelationships(search, pageable);
+        Page<RelationshipDto> result = relationshipService.getAllRelationships(search, limit, offset, sortBy, direction);
         return ResponseEntity.ok(result);
 
     }

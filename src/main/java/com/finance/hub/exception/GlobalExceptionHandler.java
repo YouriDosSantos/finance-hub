@@ -34,6 +34,15 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>("Unauthorized: " + ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
+    // Handle database errors (500)
+    @ExceptionHandler(DatabaseException.class)
+    public ResponseEntity<String> handleDatabaseException(DatabaseException ex) {
+        return new ResponseEntity<>(
+                "Database error: " + ex.getMessage(),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
+    }
+
 //    Fallback for any other unhandled exception (500)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGeneral(Exception ex){

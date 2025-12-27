@@ -3,12 +3,15 @@ package com.finance.hub.service;
 import com.finance.hub.dataTransfer.FinancialAccountDto;
 import com.finance.hub.exception.BadRequestException;
 import com.finance.hub.exception.EntityNotFoundException;
+import com.finance.hub.jdbcRepo.FinancialAccountJdbcRepository;
 import com.finance.hub.model.FinancialAccount;
 import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.FinancialAccountRepository;
 import com.finance.hub.repository.RelationshipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,11 +23,11 @@ import java.util.stream.Collectors;
 @Service
 public class FinancialAccountService {
 
-    private final FinancialAccountRepository financialAccountRepository;
+    private final FinancialAccountJdbcRepository financialAccountJdbcRepository;
     private final RelationshipRepository relationshipRepository;
 
-    public FinancialAccountService(FinancialAccountRepository financialAccountRepository, RelationshipRepository relationshipRepository) {
-        this.financialAccountRepository = financialAccountRepository;
+    public FinancialAccountService(FinancialAccountJdbcRepository financialAccountJdbcRepository, RelationshipRepository relationshipRepository) {
+        this.financialAccountJdbcRepository = financialAccountJdbcRepository;
         this.relationshipRepository = relationshipRepository;
     }
 
@@ -48,47 +51,44 @@ public class FinancialAccountService {
                 relationship
         );
 
-        FinancialAccount saved = financialAccountRepository.save(financialAccount);
+        FinancialAccount saved = financialAccountJdbcRepository.save(financialAccount);
         return mapToDto(saved);
     }
 
     //    Get Account By ID
     @Transactional(readOnly = true)
     public FinancialAccountDto getAccountById(Long id) {
-        FinancialAccount financialAccount = financialAccountRepository.findById(id)
+        FinancialAccount financialAccount = financialAccountJdbcRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Financial Account not found with id: " + id));
 
         return mapToDto(financialAccount);
     }
 
-////    Get All FinancialAccounts
-//    @Transactional(readOnly = true)
-//    public List<FinancialAccountDto> getAllFinancialAccounts(){
-//        return financialAccountRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
-//    }
-
 //  Changes for Pagination
     @Transactional(readOnly = true)
-    public Page<FinancialAccountDto> getAllFinancialAccounts(String search, Pageable pageable) {
-        Page<FinancialAccount> financialAccounts;
+    public Page<FinancialAccountDto> getAllFinancialAccounts(String search, int limit, int offset, String sortBy, String direction) {
+        List<FinancialAccount> financialAccounts;
 
         if(search == null || search.isBlank()){
-            financialAccounts = financialAccountRepository.findAll(pageable);
+            financialAccounts = financialAccountJdbcRepository.findAll(limit, offset, sortBy, direction);
         } else {
-            financialAccounts = financialAccountRepository
-                    .findByAccountNameContainingIgnoreCaseOrAccountNumberContainingIgnoreCaseOrAccountTypeContainingIgnoreCase(
-                            search, search, search, pageable
-                    );
+            financialAccounts = financialAccountJdbcRepository
+                    .searchFinancialAccounts(
+                            search, limit, offset, sortBy, direction);
         }
 
-        return financialAccounts.map(this::mapToDto);
+        List<FinancialAccountDto> dtos = financialAccounts.stream().map(this::mapToDto).toList();
+        Long total = financialAccountJdbcRepository.countFinancialAccounts(search);
+
+        PageRequest pageRequest = PageRequest.of(offset / limit, limit);
+        return new PageImpl<>(dtos, pageRequest, total);
     }
 
 
 //   Update Financial Account
     @Transactional
     public FinancialAccountDto updateFinancialAccount(Long id, FinancialAccountDto financialAccountDto){
-        FinancialAccount financialAccount = financialAccountRepository.findById(id)
+        FinancialAccount financialAccount = financialAccountJdbcRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Financial Account not found with id: " + id));
 
         financialAccount.setAccountName(financialAccountDto.getAccountName());
@@ -102,7 +102,7 @@ public class FinancialAccountService {
             financialAccount.setRelationship(relationship);
         }
 
-        FinancialAccount updated = financialAccountRepository.save(financialAccount);
+        FinancialAccount updated = financialAccountJdbcRepository.save(financialAccount);
         return mapToDto(updated);
     }
 
@@ -110,11 +110,11 @@ public class FinancialAccountService {
 //    Delete
     @Transactional
     public void deleteFinancialAccount(Long id){
-        if(!financialAccountRepository.existsById(id)){
+        if(!financialAccountJdbcRepository.existsById(id)){
             throw new EntityNotFoundException("Financial Account not found with id: " + id);
         }
 
-        financialAccountRepository.deleteById(id);
+        financialAccountJdbcRepository.deleteById(id);
     }
 
 //Mapping Helper

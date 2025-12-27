@@ -3,9 +3,6 @@ package com.finance.hub.controller;
 import com.finance.hub.dataTransfer.ContactDto;
 import com.finance.hub.service.ContactService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -47,20 +44,20 @@ public class ContactController {
 //        return ResponseEntity.ok(contactService.getAllContacts());
 //    }
 
+    //Get All (With optional search, limit, offset)
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_OPERATOR')")
     @GetMapping
     public ResponseEntity<Page<ContactDto>> getAllContacts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
+            // starting row index(like SQL OFFSET)
+            @RequestParam(defaultValue = "0") int offset,
+            // max number of rows returned
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction,
-            @RequestParam(required = false) String search
+            @RequestParam(defaultValue = "asc") String direction
+
     ){
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<ContactDto> result = contactService.getAllContacts(search, pageable);
+        Page<ContactDto> result = contactService.getAllContacts(search, limit, offset, sortBy, direction);
         return ResponseEntity.ok(result);
     }
 
