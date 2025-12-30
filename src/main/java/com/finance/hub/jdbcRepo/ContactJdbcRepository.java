@@ -73,7 +73,13 @@ public class ContactJdbcRepository {
     }
 
     public Optional<Contact> findById(Long id) {
-        String sql = "SELECT id, first_name, last_name, email, phone, job_title, relationship_id FROM contact WHERE id = ?";
+        String sql = """
+            SELECT
+                c.id, c.first_name, c.last_name, c.email, c.phone, c.job_title, c.relationship_id, r.name AS relationship_name
+            FROM contact c
+            LEFT JOIN relationship r ON c.relationship_id = r.id
+            WHERE c.id = ?
+        """;
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
@@ -128,8 +134,14 @@ public class ContactJdbcRepository {
         // Validate direction
         String order = direction.equalsIgnoreCase("desc") ? "DESC" : "ASC";
 
-        String sql = "SELECT id, first_name, last_name, email, phone, job_title, relationship_id " +
-                " FROM contact ORDER BY " + sortBy + " " + order + " LIMIT ? OFFSET ?";
+        String sql = """
+                SELECT
+                    c.id, c.first_name, c.last_name, c.email, c.phone, c.job_title, c.relationship_id, r.name AS relationship_name
+                FROM contact c
+                LEFT JOIN relationship r ON c.relationship_id = r.id
+                ORDER BY %s %s
+                LIMIT ? OFFSET ?
+                """.formatted(sortBy, order);
 
         List<Contact> contacts = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
@@ -186,7 +198,13 @@ public class ContactJdbcRepository {
 
     //Find All Contacts by lastName
     public List<Contact> findByLastName(String lastName) {
-        String sql = "SELECT id, first_name, last_name, email, job_title, relationship_id FROM contact WHERE last_name = ?";
+        String sql = """
+            SELECT
+                c.id, c.first_name, c.last_name, c.email, c.phone, c.job_title, c.relationship_id, r.name AS relationship_name
+            FROM contact c
+            LEFT JOIN relationship r ON c.relationship_id = r.id
+            WHERE c.last_name = ?
+        """;
         List<Contact> contacts = new ArrayList<>();
 
         try(Connection conn = dataSource.getConnection();
@@ -209,7 +227,14 @@ public class ContactJdbcRepository {
 
     //Find all contacts by RelationshipId
     public List<Contact> findByRelationshipId(Long relationshipId) {
-        String sql = "SELECT id, first_name, last_name, email, job_title, relationship_id FROM contact WHERE relationship_id = ?";
+        String sql = """
+            SELECT
+                c.id, c.first_name, c.last_name, c.email, c.phone, c.job_title, c.relationship_id, r.name AS relationship_name
+            FROM contact c
+            LEFT JOIN relationship r ON c.relationship_id = r.id
+            WHERE c.relationship_id = ?
+        """;
+
         List<Contact> contacts = new ArrayList<>();
 
         try(Connection conn = dataSource.getConnection();
@@ -232,7 +257,14 @@ public class ContactJdbcRepository {
 
     //Find all Contacts by Job Title
     public List<Contact> findByJobTitle(String jobTitle) {
-        String sql = "SELECT id, first_name, last_name, email, job_title, relationship_id FROM contact WHERE job_title = ?";
+        String sql = """
+                SELECT
+                    c.id, c.first_name, c.last_name, c.email, c.job_title, c.relationship_id, r.name AS relationship_name
+                FROM contact c
+                LEFT JOIN relationship r ON c.relationship_id = r.id
+                WHERE c.job_title = ?
+                """;
+
         List<Contact> contacts = new ArrayList<>();
 
         try(Connection conn = dataSource.getConnection();
@@ -261,13 +293,18 @@ public class ContactJdbcRepository {
         }
         String order = direction.equalsIgnoreCase("desc") ? "DESC" : "ASC";
 
-        String sql = "SELECT id, first_name, last_name, email, phone, job_title, relationship_id " +
-                "FROM contact " +
-                "WHERE LOWER(first_name) LIKE LOWER(?) " +
-                "   OR LOWER(last_name) LIKE LOWER(?) " +
-                "   OR LOWER(email) LIKE LOWER(?) " +
-                "   OR LOWER(job_title) LIKE LOWER(?) " +
-                "ORDER BY " + sortBy + " " + order + " LIMIT ? OFFSET ?";
+        String sql = """
+                SELECT
+                    c.id, c.first_name, c.last_name, c.email, c.phone, c.job_title, c.relationship_id, r.name AS relationship_name
+                FROM contact c
+                LEFT JOIN relationship r ON c.relationship_id = r.id
+                WHERE LOWER(c.first_name) LIKE LOWER(?)
+                    OR LOWER(c.last_name) LIKE LOWER (?)
+                    OR LOWER(c.email) LIKE LOWER (?)
+                    OR LOWER(c.job_title) LIKE LOWER(?)
+                ORDER BY %s %s
+                LIMIT ? OFFSET ?
+                """.formatted(sortBy, order);
 
         List<Contact> contacts = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
@@ -300,11 +337,14 @@ public class ContactJdbcRepository {
         contact.setEmail(rs.getString("email"));
         contact.setPhone(rs.getString("phone"));
         contact.setJobTitle(rs.getString("job_title"));
+        // relationshipName if needed
+        String relationshipName = rs.getString("relationship_name");
         // relationship_id mapping if needed
         Long relationshipId = rs.getLong("relationship_id");
         if (!rs.wasNull()) {
             Relationship relationship = new Relationship();
             relationship.setId(relationshipId);
+            relationship.setName(relationshipName);
             contact.setRelationship(relationship);
         }
         return contact;

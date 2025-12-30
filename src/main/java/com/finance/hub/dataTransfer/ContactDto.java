@@ -16,11 +16,12 @@ public class ContactDto {
     private String phone;
     private String jobTitle;
     private Long relationshipId;
+    private String relationshipName;
 
     public ContactDto(){}
 
 
-    public ContactDto(Long id, String firstName, String lastName, String email, String phone, String jobTitle, Long relationshipId) {
+    public ContactDto(Long id, String firstName, String lastName, String email, String phone, String jobTitle, Long relationshipId, String relationshipName) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -28,6 +29,8 @@ public class ContactDto {
         this.phone = phone;
         this.jobTitle = jobTitle;
         this.relationshipId = relationshipId;
+        this.relationshipName = relationshipName;
+
     }
 
     public Long getId() {
@@ -36,6 +39,14 @@ public class ContactDto {
 
     public Long getRelationshipId() {
         return relationshipId;
+    }
+
+    public String getRelationshipName() {
+        return relationshipName;
+    }
+
+    public void setRelationshipName(String relationshipName) {
+        this.relationshipName = relationshipName;
     }
 
     public String getFirstName() {

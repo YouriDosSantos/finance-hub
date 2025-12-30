@@ -15,16 +15,18 @@ public class FinancialAccountDto {
     private String accountType;
     private BigDecimal balance;
     private Long relationshipId;
+    private String relationshipName;
 
     public FinancialAccountDto(){}
 
-    public FinancialAccountDto(Long id, String accountName, String accountNumber, String accountType, BigDecimal balance, Long relationshipId) {
+    public FinancialAccountDto(Long id, String accountName, String accountNumber, String accountType, BigDecimal balance, Long relationshipId, String relationshipName) {
         this.id = id;
         this.accountName = accountName;
         this.accountNumber = accountNumber;
         this.accountType = accountType;
         this.balance = balance;
         this.relationshipId = relationshipId;
+        this.relationshipName = relationshipName;
     }
 
     public Long getId() {
@@ -33,6 +35,14 @@ public class FinancialAccountDto {
 
     public Long getRelationshipId() {
         return relationshipId;
+    }
+
+    public String getRelationshipName() {
+        return relationshipName;
+    }
+
+    public void setRelationshipName(String relationshipName) {
+        this.relationshipName = relationshipName;
     }
 
     public String getAccountName() {

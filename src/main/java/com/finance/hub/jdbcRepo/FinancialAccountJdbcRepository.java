@@ -76,7 +76,13 @@ public class FinancialAccountJdbcRepository {
     }
 
     public Optional<FinancialAccount> findById(Long id) {
-        String sql = "SELECT id, account_name, account_number, account_type, balance, relationship_id FROM financial_account WHERE id = ?";
+        String sql = """
+                SELECT
+                    fa.id, fa.account_name, fa.account_number, fa.account_type, fa.balance, fa.relationship_id, r.name AS relationship_name
+                FROM financial_account fa
+                LEFT JOIN relationship r ON fa.relationship_id = r.id
+                WHERE fa.id = ?
+                """;
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
@@ -132,8 +138,14 @@ public class FinancialAccountJdbcRepository {
 
         String order = direction.equalsIgnoreCase("desc") ? "DESC" : "ASC";
 
-        String sql = "SELECT id, account_name, account_number, account_type, balance, relationship_id " +
-                "FROM financial_account ORDER BY " + sortBy + " " + order + " LIMIT ? OFFSET ?";
+        String sql = """
+                SELECT
+                    fa.id, fa.account_name, fa.account_number, fa.account_type, fa.balance, fa.relationship_id, r.name AS relationship_name
+                FROM financial_account fa
+                LEFT JOIN relationship r ON fa.relationship_id = r.id
+                ORDER BY %s %s
+                LIMIT ? OFFSET ?
+                """.formatted(sortBy, order);
 
         List<FinancialAccount> financialAccounts = new ArrayList<>();
 
@@ -197,7 +209,13 @@ public class FinancialAccountJdbcRepository {
     //Find Accounts by relationship id
     public List<FinancialAccount> findAccountsByRelationshipId(Long relationshipId){
 
-        String sql = "SELECT id, account_name, account_number, account_type, balance, relationship_id from financial_account WHERE relationship_id = ?";
+        String sql = """
+                SELECT
+                    fa.id, fa.account_name, fa.account_number, fa.account_type, fa.balance, fa.relationship_id, r.name AS relationship_name
+                FROM financial_account fa
+                LEFT JOIN relationship r ON fa.relationship_id = r.id
+                WHERE fa.relationship_id = ?
+                """;
         List<FinancialAccount> accounts = new ArrayList<>();
 
         try(Connection conn = dataSource.getConnection();
@@ -220,7 +238,13 @@ public class FinancialAccountJdbcRepository {
 
     //Find account by account number
     public Optional<FinancialAccount> findByAccountNumber(String accountNumber) {
-        String sql = "SELECT id, account_name, account_number, account_type, balance, relationship_id FROM financial_account WHERE account_number = ?";
+        String sql = """
+                SELECT
+                    fa.id, fa.account_name, fa.account_number, fa.account_type, fa.balance, fa.relationship_id, r.name AS relationship_name
+                FROM financial_account fa
+                LEFT JOIN relationship r ON fa.relationship_id = r.id
+                WHERE fa.account_number = ?
+                """;
 
         try(Connection conn = dataSource.getConnection();
             PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -243,7 +267,13 @@ public class FinancialAccountJdbcRepository {
 
     //Find by Account Type
     public List<FinancialAccount> findByAccountType(String accountType) {
-        String sql = "SELECT id, account_name, account_number, account_type, balance, relationship_id from financial_account WHERE account_type = ? ";
+        String sql = """
+                SELECT
+                    fa.id, fa.account_name, fa.account_number, fa.account_type, fa.balance, fa.relationship_id, r.name AS relationship_name
+                FROM financial_account fa
+                LEFT JOIN relationship r ON fa.relationship_id = r.id
+                WHERE fa.account_type = ?
+                """;
         List<FinancialAccount> accounts = new ArrayList<>();
 
         try(Connection conn = dataSource.getConnection();
@@ -271,12 +301,17 @@ public class FinancialAccountJdbcRepository {
         }
         String order = direction.equalsIgnoreCase("desc") ? "DESC" : "ASC";
 
-        String sql = "SELECT id, account_name, account_number, account_type, balance, relationship_id " +
-                "FROM financial_account " +
-                "WHERE LOWER(account_name) LIKE LOWER(?) " +
-                "   OR LOWER(account_number) LIKE LOWER(?) " +
-                "   OR LOWER(account_type) LIKE LOWER(?) " +
-                "ORDER BY " + sortBy + " " + order + " LIMIT ? OFFSET ?";
+        String sql = """
+                SELECT
+                    fa.id, fa.account_name, fa.account_number, fa.account_type, fa.balance, fa.relationship_id, r.name AS relationship_name
+                FROM financial_account fa
+                LEFT JOIN relationship r ON fa.relationship_id = r.id
+                WHERE LOWER(fa.account_name) LIKE LOWER(?)
+                    OR LOWER(fa.account_number) LIKE LOWER(?)
+                    OR LOWER(fa.account_type) LIKE LOWER(?)
+                ORDER BY %s %s
+                LIMIT ? OFFSET ?
+                """.formatted(sortBy, offset);
 
         List<FinancialAccount> financialAccounts = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
@@ -307,10 +342,14 @@ public class FinancialAccountJdbcRepository {
         account.setAccountNumber(rs.getString("account_number"));
         account.setAccountType(rs.getString("account_type"));
         account.setBalance(rs.getBigDecimal("balance"));
+
+        String relationshipName = rs.getString("relationship_name");
+
         Long relationshipId = rs.getLong("relationship_id");
         if(!rs.wasNull()) {
             Relationship relationship = new Relationship();
             relationship.setId(relationshipId);
+            relationship.setName(relationshipName);
             account.setRelationship(relationship);
         }
 

@@ -125,7 +125,8 @@ public class FinancialAccountService {
                 financialAccount.getAccountNumber(),
                 financialAccount.getAccountType(),
                 financialAccount.getBalance(),
-                financialAccount.getRelationship() != null ? financialAccount.getRelationship().getId() : null
+                financialAccount.getRelationship() != null ? financialAccount.getRelationship().getId() : null,
+                financialAccount.getRelationship() != null ? financialAccount.getRelationship().getName() : null
         );
     }
 }

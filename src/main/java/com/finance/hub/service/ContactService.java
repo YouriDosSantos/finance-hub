@@ -127,7 +127,8 @@ public class ContactService {
                 contact.getEmail(),
                 contact.getPhone(),
                 contact.getJobTitle(),
-                contact.getRelationship() != null ? contact.getRelationship().getId() : null
+                contact.getRelationship() != null ? contact.getRelationship().getId() : null,
+                contact.getRelationship() != null ? contact.getRelationship().getName() : null
         );
     }
 }
