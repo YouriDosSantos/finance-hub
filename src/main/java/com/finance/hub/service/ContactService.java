@@ -9,6 +9,10 @@ import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.ContactRepository;
 import com.finance.hub.repository.RelationshipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -34,7 +38,9 @@ public class ContactService {
     }
 
     //    Create a New Contact -> One DB write (save). Transaction ensures rollback if relationship not found or save fails.
+    //Added Redis/Cache annotation. List cache becomes stale. CREATE
     @Transactional
+    @CacheEvict(value = "contacts_list", allEntries = true)
     public ContactDto createContact(ContactDto contactDto){
 
         if(contactDto.getRelationshipId() == null){
@@ -55,18 +61,24 @@ public class ContactService {
         );
 
         Contact saved = contactJdbcRepository.save(contact);
+
+        //No @CachePut here because ID is generated AFTER save
         return mapToDto(saved);
     }
 
     //    Find Contact by ID -> Read-only transaction for performance optimization
+    // ADDED cacheable. READ BY ID
     @Transactional(readOnly = true)
+    @Cacheable(value = "contacts", key = "#id")
     public ContactDto getContactById(Long id){
         Contact contact = contactJdbcRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Contact not found with id: " + id));
         return mapToDto(contact);
     }
 
+    //ADDED Cacheable. LIST + SEARCH
     @Transactional(readOnly = true)
+    @Cacheable(value = "contacts_list", key = "{#search, #limit, #offset, #sortBy, #direction}")
     public Page<ContactDto> getAllContacts(String search, int limit, int offset, String sortBy, String direction) {
         List<Contact> contacts;
         if (search == null || search.isBlank()) {
@@ -84,7 +96,10 @@ public class ContactService {
 
 
     //    Update a Contact -> Update modifies + saves. Needs a transaction for atomicity.
+    //UPDATE CACHE
     @Transactional
+    @CachePut(value = "contacts", key = "#id") //update single cached contact
+    @CacheEvict(value = "contacts_list", allEntries = true) //list cache becomes stale
     public ContactDto updateContact(Long id, ContactDto contactDto){
         Contact contact = contactJdbcRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Contact not found with id: " + id));
@@ -108,7 +123,14 @@ public class ContactService {
     }
 
     //    Delete a contact -> One DB delete. Wraps delete in a transaction.
+    //DELETE Cacheable. Added @caching and evict because java does not let multiple annotation be together such as CacheEvict back to back without the @Caching ()
     @Transactional
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "contacts", key = "#id"), //remove single cached contact
+                    @CacheEvict(value = "contacts_list", allEntries = true) //list cache becomes stale
+            }
+    )
     public void deleteContact(Long id){
         if(!contactJdbcRepository.existsById(id)){
             throw new EntityNotFoundException("Contact not found with id: " + id);
