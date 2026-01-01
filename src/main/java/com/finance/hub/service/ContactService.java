@@ -8,6 +8,7 @@ import com.finance.hub.model.Contact;
 import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.ContactRepository;
 import com.finance.hub.repository.RelationshipRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -37,10 +38,17 @@ public class ContactService {
         this.relationshipRepository = relationshipRepository;
     }
 
+    //Cache Warming
+    @PostConstruct
+    public void warmCaches() {
+        getCachedContactList("", 10, 0, "id", "ASC");
+        getCachedContactCount("");
+    }
+
     //    Create a New Contact -> One DB write (save). Transaction ensures rollback if relationship not found or save fails.
     //Added Redis/Cache annotation. List cache becomes stale. CREATE
     @Transactional
-    @CacheEvict(value = "contacts_list", allEntries = true)
+    @CacheEvict(value = {"contacts_list", "contacts_count"}, allEntries = true)
     public ContactDto createContact(ContactDto contactDto){
 
         if(contactDto.getRelationshipId() == null){
@@ -78,20 +86,37 @@ public class ContactService {
 
     //ADDED Cacheable. LIST + SEARCH
     @Transactional(readOnly = true)
-    @Cacheable(value = "contacts_list", key = "{#search, #limit, #offset, #sortBy, #direction}")
     public Page<ContactDto> getAllContacts(String search, int limit, int offset, String sortBy, String direction) {
+        //1. Load cached list
+        List<ContactDto> cachedList = getCachedContactList(search, limit, offset, sortBy, direction);
+
+        //2. Load cached count
+        Long total = getCachedContactCount(search);
+
+        //3. Build page object manually
+        PageRequest pageRequest = PageRequest.of(offset / limit, limit);
+        return  new PageImpl<>(cachedList, pageRequest, total);
+    }
+
+
+    @Cacheable(value = "contacts_list", keyGenerator = "hashKeyGenerator")
+    public List<ContactDto> getCachedContactList(String search, int limit, int offset, String sortBy, String direction) {
+
         List<Contact> contacts;
+
         if (search == null || search.isBlank()) {
-            contacts = contactJdbcRepository.findAll(limit, offset, sortBy, direction);   // <-- implement in JDBC repo
+            contacts = contactJdbcRepository.findAll(limit, offset, sortBy, direction);
         } else {
             contacts = contactJdbcRepository.searchContacts(search, limit, offset, sortBy, direction);
         }
 
-        List<ContactDto> dtos = contacts.stream().map(this::mapToDto).toList();
-        Long total = contactJdbcRepository.countContacts(search);
+        return contacts.stream().map(this::mapToDto).toList();
+    }
 
-        PageRequest pageRequest = PageRequest.of(offset / limit, limit);
-        return new PageImpl<>(dtos, pageRequest, total);
+
+    @Cacheable(value = "contacts_count", keyGenerator = "hashKeyGenerator" )
+    public Long getCachedContactCount(String search) {
+        return contactJdbcRepository.countContacts(search);
     }
 
 
@@ -99,7 +124,7 @@ public class ContactService {
     //UPDATE CACHE
     @Transactional
     @CachePut(value = "contacts", key = "#id") //update single cached contact
-    @CacheEvict(value = "contacts_list", allEntries = true) //list cache becomes stale
+    @CacheEvict(value = {"contacts_list", "contacts_count"}, allEntries = true) //list cache becomes stale
     public ContactDto updateContact(Long id, ContactDto contactDto){
         Contact contact = contactJdbcRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Contact not found with id: " + id));
@@ -128,7 +153,7 @@ public class ContactService {
     @Caching(
             evict = {
                     @CacheEvict(value = "contacts", key = "#id"), //remove single cached contact
-                    @CacheEvict(value = "contacts_list", allEntries = true) //list cache becomes stale
+                    @CacheEvict(value = {"contacts_list", "contacts_count"}, allEntries = true) //list cache becomes stale
             }
     )
     public void deleteContact(Long id){
