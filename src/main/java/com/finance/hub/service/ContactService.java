@@ -9,6 +9,7 @@ import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.ContactRepository;
 import com.finance.hub.repository.RelationshipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -66,6 +67,7 @@ public class ContactService {
         return mapToDto(contact);
     }
 
+    @Cacheable("contacts")
     @Transactional(readOnly = true)
     public Page<ContactDto> getAllContacts(String search, int limit, int offset, String sortBy, String direction) {
         List<Contact> contacts;
