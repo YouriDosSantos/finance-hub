@@ -9,6 +9,7 @@ import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.ContactRepository;
 import com.finance.hub.repository.RelationshipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
@@ -28,10 +29,12 @@ public class ContactService {
 //    private final ContactRepository contactRepository;
     private final ContactJdbcRepository contactJdbcRepository;
     private final RelationshipRepository relationshipRepository;
+    private final CacheInvalidationService cacheInvalidationService;
 
-    public ContactService(ContactJdbcRepository contactJdbcRepository, RelationshipRepository relationshipRepository) {
+    public ContactService(ContactJdbcRepository contactJdbcRepository, RelationshipRepository relationshipRepository, CacheInvalidationService cacheInvalidationService) {
         this.contactJdbcRepository = contactJdbcRepository;
         this.relationshipRepository = relationshipRepository;
+        this.cacheInvalidationService = cacheInvalidationService;
     }
 
     //    Create a New Contact -> One DB write (save). Transaction ensures rollback if relationship not found or save fails.
@@ -56,6 +59,9 @@ public class ContactService {
         );
 
         Contact saved = contactJdbcRepository.save(contact);
+
+        cacheInvalidationService.evictContactsCache(); //Clear getAllContacts Cache after create
+
         return mapToDto(saved);
     }
 
@@ -106,6 +112,9 @@ public class ContactService {
         }
 
         Contact updated = contactJdbcRepository.save(contact);
+
+        cacheInvalidationService.evictContactsCache(); //Clear getAllContacts cache after update
+
         return mapToDto(updated);
     }
 
@@ -117,6 +126,8 @@ public class ContactService {
         }
 
         contactJdbcRepository.deleteById(id);
+
+        cacheInvalidationService.evictContactsCache(); //clear getAllContacts after delete
     }
 
 
