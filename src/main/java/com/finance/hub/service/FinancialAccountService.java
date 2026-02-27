@@ -9,6 +9,7 @@ import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.FinancialAccountRepository;
 import com.finance.hub.repository.RelationshipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -25,10 +26,12 @@ public class FinancialAccountService {
 
     private final FinancialAccountJdbcRepository financialAccountJdbcRepository;
     private final RelationshipRepository relationshipRepository;
+    private final CacheInvalidationService cacheInvalidationService;
 
-    public FinancialAccountService(FinancialAccountJdbcRepository financialAccountJdbcRepository, RelationshipRepository relationshipRepository) {
+    public FinancialAccountService(FinancialAccountJdbcRepository financialAccountJdbcRepository, RelationshipRepository relationshipRepository, CacheInvalidationService cacheInvalidationService) {
         this.financialAccountJdbcRepository = financialAccountJdbcRepository;
         this.relationshipRepository = relationshipRepository;
+        this.cacheInvalidationService = cacheInvalidationService;
     }
 
     //    Create a Financial Account
@@ -52,6 +55,9 @@ public class FinancialAccountService {
         );
 
         FinancialAccount saved = financialAccountJdbcRepository.save(financialAccount);
+
+        cacheInvalidationService.evictFinancialAccountsCache(); //Clear getAllFinancialAccounts after create
+
         return mapToDto(saved);
     }
 
@@ -65,6 +71,7 @@ public class FinancialAccountService {
     }
 
 //  Changes for Pagination
+    @Cacheable("financialAccounts")
     @Transactional(readOnly = true)
     public Page<FinancialAccountDto> getAllFinancialAccounts(String search, int limit, int offset, String sortBy, String direction) {
         List<FinancialAccount> financialAccounts;
@@ -103,6 +110,9 @@ public class FinancialAccountService {
         }
 
         FinancialAccount updated = financialAccountJdbcRepository.save(financialAccount);
+
+        cacheInvalidationService.evictFinancialAccountsCache(); //clear getAllFinancialAccounts after update
+
         return mapToDto(updated);
     }
 
@@ -115,6 +125,8 @@ public class FinancialAccountService {
         }
 
         financialAccountJdbcRepository.deleteById(id);
+
+        cacheInvalidationService.evictFinancialAccountsCache(); //clear getAllFinancialAccounts after delete
     }
 
 //Mapping Helper

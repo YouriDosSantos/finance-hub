@@ -5,10 +5,12 @@ import com.finance.hub.model.Relationship;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
+import java.io.Serializable;
 import java.lang.module.ModuleDescriptor;
 import java.time.LocalDateTime;
 
-public class ContactDto {
+
+public class ContactDto implements Serializable {
     private Long id;
     private String firstName;
     private String lastName;

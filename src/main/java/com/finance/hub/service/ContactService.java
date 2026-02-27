@@ -8,12 +8,9 @@ import com.finance.hub.model.Contact;
 import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.ContactRepository;
 import com.finance.hub.repository.RelationshipRepository;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -32,23 +29,16 @@ public class ContactService {
 //    private final ContactRepository contactRepository;
     private final ContactJdbcRepository contactJdbcRepository;
     private final RelationshipRepository relationshipRepository;
+    private final CacheInvalidationService cacheInvalidationService;
 
-    public ContactService(ContactJdbcRepository contactJdbcRepository, RelationshipRepository relationshipRepository) {
+    public ContactService(ContactJdbcRepository contactJdbcRepository, RelationshipRepository relationshipRepository, CacheInvalidationService cacheInvalidationService) {
         this.contactJdbcRepository = contactJdbcRepository;
         this.relationshipRepository = relationshipRepository;
-    }
-
-    //Cache Warming
-    @PostConstruct
-    public void warmCaches() {
-        getCachedContactList("", 10, 0, "id", "ASC");
-        getCachedContactCount("");
+        this.cacheInvalidationService = cacheInvalidationService;
     }
 
     //    Create a New Contact -> One DB write (save). Transaction ensures rollback if relationship not found or save fails.
-    //Added Redis/Cache annotation. List cache becomes stale. CREATE
     @Transactional
-    @CacheEvict(value = {"contacts_list", "contacts_count"}, allEntries = true)
     public ContactDto createContact(ContactDto contactDto){
 
         if(contactDto.getRelationshipId() == null){
@@ -70,61 +60,39 @@ public class ContactService {
 
         Contact saved = contactJdbcRepository.save(contact);
 
-        //No @CachePut here because ID is generated AFTER save
+        cacheInvalidationService.evictContactsCache(); //Clear getAllContacts Cache after create
+
         return mapToDto(saved);
     }
 
     //    Find Contact by ID -> Read-only transaction for performance optimization
-    // ADDED cacheable. READ BY ID
     @Transactional(readOnly = true)
-    @Cacheable(value = "contacts", key = "#id")
     public ContactDto getContactById(Long id){
         Contact contact = contactJdbcRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Contact not found with id: " + id));
         return mapToDto(contact);
     }
 
-    //ADDED Cacheable. LIST + SEARCH
+    @Cacheable("contacts")
     @Transactional(readOnly = true)
     public Page<ContactDto> getAllContacts(String search, int limit, int offset, String sortBy, String direction) {
-        //1. Load cached list
-        List<ContactDto> cachedList = getCachedContactList(search, limit, offset, sortBy, direction);
-
-        //2. Load cached count
-        Long total = getCachedContactCount(search);
-
-        //3. Build page object manually
-        PageRequest pageRequest = PageRequest.of(offset / limit, limit);
-        return  new PageImpl<>(cachedList, pageRequest, total);
-    }
-
-
-    @Cacheable(value = "contacts_list", keyGenerator = "hashKeyGenerator")
-    public List<ContactDto> getCachedContactList(String search, int limit, int offset, String sortBy, String direction) {
-
         List<Contact> contacts;
-
         if (search == null || search.isBlank()) {
-            contacts = contactJdbcRepository.findAll(limit, offset, sortBy, direction);
+            contacts = contactJdbcRepository.findAll(limit, offset, sortBy, direction);   // <-- implement in JDBC repo
         } else {
             contacts = contactJdbcRepository.searchContacts(search, limit, offset, sortBy, direction);
         }
 
-        return contacts.stream().map(this::mapToDto).toList();
-    }
+        List<ContactDto> dtos = contacts.stream().map(this::mapToDto).toList();
+        Long total = contactJdbcRepository.countContacts(search);
 
-
-    @Cacheable(value = "contacts_count", keyGenerator = "hashKeyGenerator" )
-    public Long getCachedContactCount(String search) {
-        return contactJdbcRepository.countContacts(search);
+        PageRequest pageRequest = PageRequest.of(offset / limit, limit);
+        return new PageImpl<>(dtos, pageRequest, total);
     }
 
 
     //    Update a Contact -> Update modifies + saves. Needs a transaction for atomicity.
-    //UPDATE CACHE
     @Transactional
-    @CachePut(value = "contacts", key = "#id") //update single cached contact
-    @CacheEvict(value = {"contacts_list", "contacts_count"}, allEntries = true) //list cache becomes stale
     public ContactDto updateContact(Long id, ContactDto contactDto){
         Contact contact = contactJdbcRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Contact not found with id: " + id));
@@ -144,24 +112,22 @@ public class ContactService {
         }
 
         Contact updated = contactJdbcRepository.save(contact);
+
+        cacheInvalidationService.evictContactsCache(); //Clear getAllContacts cache after update
+
         return mapToDto(updated);
     }
 
     //    Delete a contact -> One DB delete. Wraps delete in a transaction.
-    //DELETE Cacheable. Added @caching and evict because java does not let multiple annotation be together such as CacheEvict back to back without the @Caching ()
     @Transactional
-    @Caching(
-            evict = {
-                    @CacheEvict(value = "contacts", key = "#id"), //remove single cached contact
-                    @CacheEvict(value = {"contacts_list", "contacts_count"}, allEntries = true) //list cache becomes stale
-            }
-    )
     public void deleteContact(Long id){
         if(!contactJdbcRepository.existsById(id)){
             throw new EntityNotFoundException("Contact not found with id: " + id);
         }
 
         contactJdbcRepository.deleteById(id);
+
+        cacheInvalidationService.evictContactsCache(); //clear getAllContacts after delete
     }
 
 
