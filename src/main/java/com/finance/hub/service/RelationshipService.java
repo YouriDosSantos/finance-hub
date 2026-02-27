@@ -5,6 +5,7 @@ import com.finance.hub.exception.EntityNotFoundException;
 import com.finance.hub.jdbcRepo.RelationshipJdbcRepository;
 import com.finance.hub.model.Relationship;
 import com.finance.hub.repository.RelationshipRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -19,10 +20,11 @@ public class RelationshipService {
 
     private final RelationshipJdbcRepository relationshipJdbcRepository;
 //    private final RelationshipRepository relationshipRepository;
+    private final CacheInvalidationService cacheInvalidationService;
 
-
-    public RelationshipService(RelationshipJdbcRepository relationshipJdbcRepository) {
+    public RelationshipService(RelationshipJdbcRepository relationshipJdbcRepository, CacheInvalidationService cacheInvalidationService) {
         this.relationshipJdbcRepository = relationshipJdbcRepository;
+        this.cacheInvalidationService = cacheInvalidationService;
     }
 
 //    Create Relationship
@@ -36,6 +38,10 @@ public class RelationshipService {
         );
 
         Relationship saved = relationshipJdbcRepository.save(relationship);
+
+        cacheInvalidationService.evictFinancialAccountsCache();
+        //clear getAllRelationships cache after create
+
         return mapToDto(saved);
     }
 
@@ -49,6 +55,7 @@ public class RelationshipService {
 
 
 //    Change for Pagination
+    @Cacheable("relationships")
     @Transactional(readOnly = true)
     public Page<RelationshipDto> getAllRelationships(String search, int limit, int offset, String sortBy, String direction) {
 
@@ -85,6 +92,10 @@ public class RelationshipService {
         relationship.setEmail(relationshipDto.getEmail());
 
         Relationship updated = relationshipJdbcRepository.save(relationship);
+
+        cacheInvalidationService.evictFinancialAccountsCache();
+        //clear getAllRelationships cache after Update
+
         return mapToDto(updated);
 }
 
@@ -96,6 +107,9 @@ public class RelationshipService {
         }
 
         relationshipJdbcRepository.deleteById(id);
+
+        cacheInvalidationService.evictFinancialAccountsCache();
+        //clear getAllRelationships cache after delete
     }
 
 

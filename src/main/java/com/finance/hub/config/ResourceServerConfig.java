@@ -55,6 +55,8 @@ public class ResourceServerConfig {
 				// Authorization rules
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers("/public/**").permitAll() // example of open endpoints
+						.requestMatchers("/actuator/prometheus").permitAll()
+						.requestMatchers("/actuator/health").permitAll()
 						.anyRequest().authenticated()              // everything else requires auth
 				)
 

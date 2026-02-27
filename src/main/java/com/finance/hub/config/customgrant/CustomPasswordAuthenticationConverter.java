@@ -72,6 +72,8 @@ public class CustomPasswordAuthenticationConverter implements AuthenticationConv
 		return new CustomPasswordAuthenticationToken(clientPrincipal, requestedScopes, additionalParameters);
 	}
 
+
+	// Helper to convert the raw servlet request into a spring MultiValueMap used at the beginning of the method above
 	private static MultiValueMap<String, String> getParameters(HttpServletRequest request) {
 		
 		Map<String, String[]> parameterMap = request.getParameterMap();

@@ -4,10 +4,11 @@ import com.finance.hub.model.Relationship;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public class FinancialAccountDto {
+public class FinancialAccountDto implements Serializable {
 
     private Long id;
     private String accountName;

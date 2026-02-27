@@ -10,4 +10,15 @@ public class CacheInvalidationService {
     public void evictContactsCache(){
         //spring handles eviction
     }
+
+    @CacheEvict(value = "financialAccounts", allEntries = true)
+    public void evictFinancialAccountsCache(){
+        //spring handles eviction
+    }
+
+    @CacheEvict(value = "relationships", allEntries = true)
+    public void evictRelationshipsCache(){
+        //spring handles eviction
+    }
+
 }

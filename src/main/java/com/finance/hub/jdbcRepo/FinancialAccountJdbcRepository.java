@@ -311,7 +311,7 @@ public class FinancialAccountJdbcRepository {
                     OR LOWER(fa.account_type) LIKE LOWER(?)
                 ORDER BY %s %s
                 LIMIT ? OFFSET ?
-                """.formatted(sortBy, offset);
+                """.formatted(sortBy, order);
 
         List<FinancialAccount> financialAccounts = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();

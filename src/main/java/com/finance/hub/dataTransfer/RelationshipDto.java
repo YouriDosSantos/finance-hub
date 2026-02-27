@@ -1,8 +1,9 @@
 package com.finance.hub.dataTransfer;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class RelationshipDto {
+public class RelationshipDto implements Serializable {
 
     private Long id;
     private String name;
