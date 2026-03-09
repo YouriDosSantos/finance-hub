@@ -57,6 +57,7 @@ public class ResourceServerConfig {
 						.requestMatchers("/public/**").permitAll() // example of open endpoints
 						.requestMatchers("/actuator/prometheus").permitAll()
 						.requestMatchers("/actuator/health").permitAll()
+						.requestMatchers("/api/users/register-user").permitAll()
 						.anyRequest().authenticated()              // everything else requires auth
 				)
 

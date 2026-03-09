@@ -1,6 +1,7 @@
 package com.finance.hub.controller;
 
 import com.finance.hub.dataTransfer.ContactDto;
+import com.finance.hub.dataTransfer.RegisterUserDto;
 import com.finance.hub.dataTransfer.UserDto;
 import com.finance.hub.service.ContactService;
 import com.finance.hub.service.UserService;
@@ -25,12 +26,17 @@ public class UserController {
 
     //    Get by ID
 
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_OPERATOR')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_OPERATOR', 'ROLE_NEWUSER')")
     @GetMapping("/me")
     public ResponseEntity<UserDto> findMe(){
         UserDto userDto = userService.getMe();
 
         return ResponseEntity.ok(userDto);
+    }
+
+    @PostMapping("/register-user")
+    public void registerUser(@RequestBody RegisterUserDto registerUserDto){
+        userService.registerUser(registerUserDto);
     }
 
 ////    Create
