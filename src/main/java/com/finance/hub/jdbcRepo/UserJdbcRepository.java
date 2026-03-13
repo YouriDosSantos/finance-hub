@@ -88,6 +88,53 @@ public class UserJdbcRepository {
         return result;
     }
 
+    //Loads Authenticated User with Roles
+    public Optional<User> findUserWithRolesByEmail(String email) {
+        String sql = """
+        SELECT u.id, u.name, u.email, u.password,
+               r.id AS role_id, r.authority
+        FROM tb_user u
+        LEFT JOIN tb_user_role ur ON u.id = ur.user_id
+        LEFT JOIN tb_role r ON r.id = ur.role_id
+        WHERE u.email = ?
+    """;
+
+        User user = null;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    if (user == null) {
+                        user = new User();
+                        user.setId(rs.getLong("id"));
+                        user.setName(rs.getString("name"));
+                        user.setEmail(rs.getString("email"));
+                        user.setPassword(rs.getString("password"));
+                    }
+
+                    Long roleId = rs.getLong("role_id");
+                    String authority = rs.getString("authority");
+
+                    if (roleId != 0 && authority != null) {
+                        Role role = new Role();
+                        role.setId(roleId);
+                        role.setAuthority(authority);
+                        user.addRole(role);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error loading user with roles " + email, e);
+        }
+
+        return Optional.ofNullable(user);
+    }
+
+
     @Transactional
     public User save(User user) {
         String insertUser = "INSERT INTO tb_user (name, email, password) VALUES (?, ?, ?)";
@@ -119,4 +166,108 @@ public class UserJdbcRepository {
 
         return user;
     }
+
+    public List<User> findAllUsers() {
+        String sql = """
+        SELECT u.id, u.name, u.email, u.password,
+               r.id AS role_id, r.authority
+        FROM tb_user u
+        LEFT JOIN tb_user_role ur ON u.id = ur.user_id
+        LEFT JOIN tb_role r ON r.id = ur.role_id
+        ORDER BY u.id
+        """;
+
+        List<User> users = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            User currentUser = null;
+            Long currentUserId = null;
+
+            while (rs.next()) {
+                Long userId = rs.getLong("id");
+
+                if (currentUser == null || !userId.equals(currentUserId)) {
+                    currentUser = new User();
+                    currentUser.setId(userId);
+                    currentUser.setName(rs.getString("name"));
+                    currentUser.setEmail(rs.getString("email"));
+                    currentUser.setPassword(rs.getString("password"));
+                    users.add(currentUser);
+                    currentUserId = userId;
+                }
+
+                Long roleId = rs.getLong("role_id");
+                String authority = rs.getString("authority");
+                if (roleId != 0 && authority != null) {
+                    Role role = new Role();
+                    role.setId(roleId);
+                    role.setAuthority(authority);
+                    currentUser.addRole(role);
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error loading all users", e);
+        }
+
+        return users;
+    }
+
+    public void updateUserName(Long id, String name) {
+        String sql = "UPDATE tb_user SET name = ? WHERE id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, name);
+            ps.setLong(2, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DatabaseException("Error updating user name for id " + id, e);
+        }
+    }
+
+    public void updateUserEmail(Long id, String email) {
+        String sql = "UPDATE tb_user SET email = ? WHERE id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+            ps.setLong(2, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DatabaseException("Error updating user email for id " + id, e);
+        }
+    }
+
+    public void updateUserRoles(Long id, List<Role> roles) {
+        String deleteSql = "DELETE FROM tb_user_role WHERE user_id = ?";
+        String insertSql = "INSERT INTO tb_user_role (user_id, role_id) VALUES (?, ?)";
+
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement deletePs = conn.prepareStatement(deleteSql)) {
+                deletePs.setLong(1, id);
+                deletePs.executeUpdate();
+            }
+
+            try (PreparedStatement insertPs = conn.prepareStatement(insertSql)) {
+                for (Role role : roles) {
+                    insertPs.setLong(1, id);
+                    insertPs.setLong(2, role.getId());
+                    insertPs.addBatch();
+                }
+                insertPs.executeBatch();
+            }
+
+            conn.commit();
+        } catch (SQLException e) {
+            throw new DatabaseException("Error updating user roles for id " + id, e);
+        }
+    }
+
 }

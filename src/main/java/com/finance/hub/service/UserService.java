@@ -63,7 +63,7 @@ public class UserService implements UserDetailsService {
             Jwt jwtPrincipal = (Jwt) authentication.getPrincipal();
             String username = jwtPrincipal.getClaim("username");
 
-            return userJdbcRepository.findByEmail(username).get();
+            return userJdbcRepository.findUserWithRolesByEmail(username).orElseThrow(() -> new UsernameNotFoundException("Email not found"));
         } catch (Exception e) {
             throw new UsernameNotFoundException("Email not found");
         }

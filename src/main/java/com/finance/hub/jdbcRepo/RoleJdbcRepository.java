@@ -9,6 +9,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Repository
 public class RoleJdbcRepository {
@@ -41,4 +43,26 @@ public class RoleJdbcRepository {
 
         return null;
     }
+
+    public List<Role> findAll() {
+        String sql = "SELECT id, authority FROM tb_role";
+        List<Role> roles = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Role role = new Role();
+                role.setId(rs.getLong("id"));
+                role.setAuthority(rs.getString("authority"));
+                roles.add(role);
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error loading roles", e);
+        }
+
+        return roles;
+    }
+
 }
