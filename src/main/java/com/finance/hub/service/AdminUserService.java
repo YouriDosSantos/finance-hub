@@ -11,21 +11,30 @@ import com.finance.hub.model.User;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 @Service
 public class AdminUserService {
 
     private final UserJdbcRepository userJdbcRepository;
     private final RoleJdbcRepository roleJdbcRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AdminUserService(UserJdbcRepository userJdbcRepository, RoleJdbcRepository roleJdbcRepository) {
+    private static final String ALPHANUM = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    public AdminUserService(UserJdbcRepository userJdbcRepository, RoleJdbcRepository roleJdbcRepository, PasswordEncoder passwordEncoder) {
         this.userJdbcRepository = userJdbcRepository;
         this.roleJdbcRepository = roleJdbcRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional(readOnly = true)
@@ -96,6 +105,30 @@ public class AdminUserService {
                 .stream()
                 .map(Role::getAuthority)
                 .toList();
+    }
+
+    @Transactional
+    public String resetPassword(Long id) {
+        User user = userJdbcRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        String tempPassword = generateTempPassword(10);
+        String encoded = passwordEncoder.encode(tempPassword);
+
+        userJdbcRepository.updatePasswordAndFlag(id, encoded, true);
+
+        System.out.println("TEMP PASSWORD GENERATED: [" + tempPassword + "]");
+
+        return tempPassword;
+    }
+
+    private String generateTempPassword(int length) {
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(ALPHANUM.charAt(RANDOM.nextInt(ALPHANUM.length())));
+        }
+
+        return sb.toString();
     }
 
 

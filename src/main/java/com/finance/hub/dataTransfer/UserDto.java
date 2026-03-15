@@ -10,6 +10,7 @@ public class UserDto {
     private Long id;
     private String name;
     private String email;
+    private boolean mustChangePassword;
 
     private final List<String> roles = new ArrayList<>();
 
@@ -17,6 +18,7 @@ public class UserDto {
         id = entity.getId();
         name = entity.getName();
         email = entity.getEmail();
+        mustChangePassword = entity.isMustChangePassword();
         for(GrantedAuthority role: entity.getAuthorities()) {
             roles.add(role.getAuthority());
         }
@@ -36,5 +38,9 @@ public class UserDto {
 
     public List<String> getRoles() {
         return roles;
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
     }
 }

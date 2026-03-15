@@ -3,6 +3,7 @@ package com.finance.hub.controller;
 import com.finance.hub.dataTransfer.ContactDto;
 import com.finance.hub.dataTransfer.RegisterUserDto;
 import com.finance.hub.dataTransfer.UserDto;
+import com.finance.hub.record.ChangePasswordRequest;
 import com.finance.hub.service.ContactService;
 import com.finance.hub.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -39,38 +40,8 @@ public class UserController {
         userService.registerUser(registerUserDto);
     }
 
-////    Create
-//    @PreAuthorize("hasRole('ROLE_ADMIN')")
-//    @PostMapping
-//    public ResponseEntity<ContactDto> createContact(@RequestBody ContactDto contactDto){
-//        ContactDto created = contactService.createContact(contactDto);
-//        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-//    }
-
-
-//
-////    Get All
-//    @GetMapping
-//    public ResponseEntity<List<ContactDto>> getAllContacts(){
-//        return ResponseEntity.ok(contactService.getAllContacts());
-//    }
-//
-////    Update
-//    @PreAuthorize("hasRole('ROLE_ADMIN')")
-//    @PutMapping("/{id}")
-//    public ResponseEntity<ContactDto> updateContact(
-//            @PathVariable Long id,
-//            @RequestBody ContactDto contactDto
-//    ) {
-//        ContactDto updated = contactService.updateContact(id, contactDto);
-//        return ResponseEntity.ok(updated);
-//    }
-//
-////    Delete
-//    @PreAuthorize("hasRole('ROLE_ADMIN')")
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deleteContact(@PathVariable Long id){
-//        contactService.deleteContact(id);
-//        return ResponseEntity.noContent().build(); //204: successful delete, no content
-//    }
+    @PostMapping
+    public void changePassword(@RequestBody ChangePasswordRequest request) {
+        userService.changePassword(request.currentPassword(), request.newPassword());
+    }
 }

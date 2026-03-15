@@ -91,7 +91,7 @@ public class UserJdbcRepository {
     //Loads Authenticated User with Roles
     public Optional<User> findUserWithRolesByEmail(String email) {
         String sql = """
-        SELECT u.id, u.name, u.email, u.password,
+        SELECT u.id, u.name, u.email, u.password, u.must_change_password,
                r.id AS role_id, r.authority
         FROM tb_user u
         LEFT JOIN tb_user_role ur ON u.id = ur.user_id
@@ -114,6 +114,7 @@ public class UserJdbcRepository {
                         user.setName(rs.getString("name"));
                         user.setEmail(rs.getString("email"));
                         user.setPassword(rs.getString("password"));
+                        user.setMustChangePassword(rs.getBoolean("must_change_password"));
                     }
 
                     Long roleId = rs.getLong("role_id");
@@ -137,15 +138,17 @@ public class UserJdbcRepository {
 
     @Transactional
     public User save(User user) {
-        String insertUser = "INSERT INTO tb_user (name, email, password) VALUES (?, ?, ?)";
+        String insertUser = "INSERT INTO tb_user (name, email, password, must_change_password) VALUES (?, ?, ?, ?)";
         String insertUserRole = "INSERT INTO tb_user_role (user_id, role_id) VALUES (?, ?)";
 
         try (Connection conn = dataSource.getConnection()) {
+            
             // Insert user
             try (PreparedStatement ps = conn.prepareStatement(insertUser, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, user.getName());
                 ps.setString(2, user.getEmail());
                 ps.setString(3, user.getPassword());
+                ps.setBoolean(4, false);
                 ps.executeUpdate();
 
                 try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -161,6 +164,7 @@ public class UserJdbcRepository {
                     ps.setLong(2, role.getId());
                     ps.executeUpdate(); } } }
         catch (SQLException e) {
+            e.printStackTrace();
             throw new DatabaseException("Error saving user", e);
         }
 
@@ -268,6 +272,49 @@ public class UserJdbcRepository {
         } catch (SQLException e) {
             throw new DatabaseException("Error updating user roles for id " + id, e);
         }
+    }
+
+    public void updatePasswordAndFlag(Long id, String encodedPassword, boolean mustChangePassword) {
+        String sql ="UPDATE tb_user SET password = ?, must_change_password = ? WHERE id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, encodedPassword);
+            ps.setBoolean(2, mustChangePassword);
+            ps.setLong(3, id);
+            System.out.println("Updating user: id=" + id + ", pass=" + encodedPassword + ", flag=" + mustChangePassword);
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DatabaseException("Error updating password for used id: " + id, e);
+        }
+
+    }
+
+    public Optional<User> findById(Long id) {
+        String sql ="SELECT id, name, email, password, must_change_password FROM tb_user WHERE id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User user = new User();
+                    user.setId(rs.getLong("id"));
+                    user.setName(rs.getString("name"));
+                    user.setEmail(rs.getString("email"));
+                    user.setPassword(rs.getString("password"));
+                    user.setMustChangePassword(rs.getBoolean("must_change_password"));
+                    return Optional.of(user);
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error loading user id " + id, e);
+        }
+        return Optional.empty();
     }
 
 }

@@ -49,4 +49,9 @@ public class AdminController {
         return adminUserService.getAllRoles();
     }
 
+    @PostMapping("/users/{id}/reset-password")
+    public String resetPassword(@PathVariable Long id) {
+        return adminUserService.resetPassword(id);
+    }
+
 }

@@ -18,6 +18,8 @@ public class User implements UserDetails {
     private String email;
     private String password;
 
+    private boolean mustChangePassword;
+
     @ManyToMany
     @JoinTable(name = "tb_user_role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns =@JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
@@ -72,6 +74,14 @@ public class User implements UserDetails {
     public String getUsername() {
 //        return "";
         return email;
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
     }
 
     @Override

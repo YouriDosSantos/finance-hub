@@ -2,6 +2,7 @@ package com.finance.hub.service;
 
 import com.finance.hub.dataTransfer.RegisterUserDto;
 import com.finance.hub.dataTransfer.UserDto;
+import com.finance.hub.exception.BadRequestException;
 import com.finance.hub.jdbcRepo.RoleJdbcRepository;
 import com.finance.hub.jdbcRepo.UserJdbcRepository;
 import com.finance.hub.model.Role;
@@ -95,5 +96,17 @@ public class UserService implements UserDetailsService {
 
         //4- Save
         userJdbcRepository.save(newUser);
+    }
+
+    @Transactional
+    public void changePassword(String currentPassword, String newPassword) {
+        User user = authenticated();
+
+        if(!passwordEncoder.matches(currentPassword,user.getPassword())) {
+            throw new BadRequestException("Current password is incorrect");
+        }
+
+        String encoded = passwordEncoder.encode(newPassword);
+        userJdbcRepository.updatePasswordAndFlag(user.getId(), encoded, false);
     }
 }
