@@ -62,20 +62,6 @@ Example features implemented via JDBC:
 
 ---
 
-## 📂 Project Structure
-
-**src/main/java/com/finance/hub**
-- **controller/** — REST endpoints  
-- **service/** — Business logic  
-- **jdbcRepo/** — Custom JDBC repositories  
-- **model/** — Domain models  
-- **dataTransfer/** — DTOs  
-- **security/** — OAuth2, JWT, RBAC  
-
-
-
----
-
 ## 🧪 Key Features
 
 ### **User Registration**
