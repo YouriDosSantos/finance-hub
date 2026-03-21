@@ -2,8 +2,6 @@
 
 A secure, role‑driven financial CRM backend built with **Spring Boot**, **Spring Security**, **OAuth2**, and a **custom JDBC persistence layer**. Designed for real‑world enterprise workflows: authentication, user management, financial data modeling, and scalable service boundaries.
 
----
-
 ## 🚀 Overview
 
 Finance Hub is a backend platform that powers a financial CRM application. It provides:
@@ -17,8 +15,6 @@ Finance Hub is a backend platform that powers a financial CRM application. It pr
 
 This project reflects a backend engineer who understands both enterprise constraints and clean, maintainable design.
 
----
-
 ## 🧱 Tech Stack
 
 | Layer | Technology |
@@ -31,8 +27,6 @@ This project reflects a backend engineer who understands both enterprise constra
 | Build | Maven |
 | Architecture | Layered (Controller → Service → Repository) |
 
----
-
 ## 🔐 Authentication & Authorization
 
 - OAuth2 Password Grant flow  
@@ -40,8 +34,6 @@ This project reflects a backend engineer who understands both enterprise constra
 - Custom `UserDetailsService` loading users + roles via JDBC  
 - Role‑based method security using `@PreAuthorize`  
 - Secure password hashing with `PasswordEncoder`  
-
----
 
 ## 🗄️ Persistence Layer
 
@@ -59,8 +51,6 @@ Example features implemented via JDBC:
 - Password updates  
 - User/role joins  
 - Contact, Relationship and financial data queries  
-
----
 
 ## 🧪 Key Features
 
@@ -86,8 +76,6 @@ Example features implemented via JDBC:
 - Relationships  
 - Financial accounts  
 - Dashboard data  
-
----
 
 ## 🧭 Why This Project Matters
 
